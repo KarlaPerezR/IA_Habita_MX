@@ -1,0 +1,99 @@
+{
+  "etapa": "coordinacion",
+  "datos": {
+    "estado": "con_alternativas",
+    "recomendacion_id": "Z02",
+    "ranking": [
+      {
+        "id": "Z02",
+        "nombre": "Zona Centro simulada",
+        "puntaje": 52.3816,
+        "precio": 1750000.0,
+        "pago_total": 13778.94,
+        "pago_estres": 15569.83,
+        "puntaje_zona": 86.25,
+        "puntaje_financiero": 1.579,
+        "alertas": [
+          "El escenario de estrés supera el límite mensual"
+        ],
+        "posicion": 1
+      },
+      {
+        "id": "Z01",
+        "nombre": "Zona Norte simulada",
+        "puntaje": 51.7629,
+        "precio": 1500000.0,
+        "pago_total": 11282.99,
+        "pago_estres": 12729.48,
+        "puntaje_zona": 73.3333,
+        "puntaje_financiero": 19.407214,
+        "alertas": [],
+        "posicion": 2
+      }
+    ],
+    "descartadas": [
+      {
+        "id": "Z03",
+        "nombre": "Zona Premium simulada",
+        "motivos": [
+          "Precio superior al presupuesto máximo",
+          "Enganche menor al mínimo del escenario",
+          "Pago mensual superior a la capacidad calculada"
+        ]
+      },
+      {
+        "id": "Z04",
+        "nombre": "Zona Compacta simulada",
+        "motivos": [
+          "Habitaciones insuficientes"
+        ]
+      },
+      {
+        "id": "Z05",
+        "nombre": "Zona Periferica simulada",
+        "motivos": [
+          "Traslado superior al máximo"
+        ]
+      },
+      {
+        "id": "Z06",
+        "nombre": "Zona Incompleta simulada",
+        "motivos": [
+          "Cobertura de indicadores insuficiente",
+          "Falta indicador obligatorio: riesgos"
+        ]
+      }
+    ],
+    "pesos": {
+      "finanzas": 0.4,
+      "seguridad": 0.15,
+      "riesgos": 0.15,
+      "vivienda": 0.1,
+      "movilidad": 0.1,
+      "entorno": 0.1
+    },
+    "limite_pago": 14000.0,
+    "limitaciones": [
+      "Datos y condiciones financieras simulados para clase.",
+      "La evaluación corresponde a la vivienda representativa de cada zona, no a toda su oferta.",
+      "No es una oferta ni una aprobación de crédito.",
+      "Las explicaciones del LLM requieren revisión humana."
+    ]
+  },
+  "conclusion": {
+    "resumen": "El límite mensual obligatorio es 14000.00 MXN; es un monto, no un porcentaje. Precio máximo, habitaciones mínimas y traslado máximo son restricciones obligatorias. Los pesos indican preferencias y no permiten violar restricciones. Orden viable obligatorio: ['Z02', 'Z01']. Las demás opciones se descartan por restricciones, no por puntajes menores. Z02 maximiza la puntuación ponderada; Z01 tiene el menor pago mensual. Z02: El escenario de estrés supera el límite mensual.",
+    "ids_revisados": [
+      "Z01",
+      "Z02",
+      "Z03",
+      "Z04",
+      "Z05",
+      "Z06"
+    ],
+    "ranking_ids": [
+      "Z02",
+      "Z01"
+    ],
+    "recomendacion_id": "Z02"
+  }
+}

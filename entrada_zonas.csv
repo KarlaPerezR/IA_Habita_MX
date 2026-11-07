@@ -1,0 +1,8 @@
+id,nombre,precio,habitaciones,traslado_min,seguridad,riesgos,vivienda,movilidad,entorno,fuente,fecha,nivel_geografico,simulado
+Z01,Zona Norte simulada,1500000,2,35,70,80,75,70,70,Equipo 6 - datos sinteticos,2026-11-05,zona ficticia,true
+Z02,Zona Centro simulada,1750000,3,25,85,90,80,90,85,Equipo 6 - datos sinteticos,2026-11-05,zona ficticia,true
+Z03,Zona Premium simulada,2400000,3,20,95,95,95,95,95,Equipo 6 - datos sinteticos,2026-11-05,zona ficticia,true
+Z04,Zona Compacta simulada,1300000,1,20,75,80,70,80,75,Equipo 6 - datos sinteticos,2026-11-05,zona ficticia,true
+Z05,Zona Periferica simulada,1550000,2,70,70,75,80,40,65,Equipo 6 - datos sinteticos,2026-11-05,zona ficticia,true
+Z06,Zona Incompleta simulada,1400000,2,30,65,,70,,70,Equipo 6 - datos sinteticos,2026-11-05,zona ficticia,true
+
