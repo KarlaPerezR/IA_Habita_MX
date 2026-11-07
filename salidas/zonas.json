@@ -1,0 +1,155 @@
+{
+  "etapa": "zonas",
+  "datos": {
+    "zonas": [
+      {
+        "id": "Z01",
+        "nombre": "Zona Norte simulada",
+        "precio": 1500000.0,
+        "indicadores": {
+          "seguridad": 70.0,
+          "riesgos": 80.0,
+          "vivienda": 75.0,
+          "movilidad": 70.0,
+          "entorno": 70.0
+        },
+        "cobertura": 1.0,
+        "puntaje_zona": 73.3333,
+        "aporte_territorial": 44.0,
+        "cumple": true,
+        "motivos": [],
+        "fuente": "Equipo 6 - datos sinteticos",
+        "fecha": "2026-11-05",
+        "nivel_geografico": "zona ficticia",
+        "simulado": true
+      },
+      {
+        "id": "Z02",
+        "nombre": "Zona Centro simulada",
+        "precio": 1750000.0,
+        "indicadores": {
+          "seguridad": 85.0,
+          "riesgos": 90.0,
+          "vivienda": 80.0,
+          "movilidad": 90.0,
+          "entorno": 85.0
+        },
+        "cobertura": 1.0,
+        "puntaje_zona": 86.25,
+        "aporte_territorial": 51.75,
+        "cumple": true,
+        "motivos": [],
+        "fuente": "Equipo 6 - datos sinteticos",
+        "fecha": "2026-11-05",
+        "nivel_geografico": "zona ficticia",
+        "simulado": true
+      },
+      {
+        "id": "Z03",
+        "nombre": "Zona Premium simulada",
+        "precio": 2400000.0,
+        "indicadores": {
+          "seguridad": 95.0,
+          "riesgos": 95.0,
+          "vivienda": 95.0,
+          "movilidad": 95.0,
+          "entorno": 95.0
+        },
+        "cobertura": 1.0,
+        "puntaje_zona": 95.0,
+        "aporte_territorial": 57.0,
+        "cumple": false,
+        "motivos": [
+          "Precio superior al presupuesto máximo"
+        ],
+        "fuente": "Equipo 6 - datos sinteticos",
+        "fecha": "2026-11-05",
+        "nivel_geografico": "zona ficticia",
+        "simulado": true
+      },
+      {
+        "id": "Z04",
+        "nombre": "Zona Compacta simulada",
+        "precio": 1300000.0,
+        "indicadores": {
+          "seguridad": 75.0,
+          "riesgos": 80.0,
+          "vivienda": 70.0,
+          "movilidad": 80.0,
+          "entorno": 75.0
+        },
+        "cobertura": 1.0,
+        "puntaje_zona": 76.25,
+        "aporte_territorial": 45.75,
+        "cumple": false,
+        "motivos": [
+          "Habitaciones insuficientes"
+        ],
+        "fuente": "Equipo 6 - datos sinteticos",
+        "fecha": "2026-11-05",
+        "nivel_geografico": "zona ficticia",
+        "simulado": true
+      },
+      {
+        "id": "Z05",
+        "nombre": "Zona Periferica simulada",
+        "precio": 1550000.0,
+        "indicadores": {
+          "seguridad": 70.0,
+          "riesgos": 75.0,
+          "vivienda": 80.0,
+          "movilidad": 40.0,
+          "entorno": 65.0
+        },
+        "cobertura": 1.0,
+        "puntaje_zona": 67.0833,
+        "aporte_territorial": 40.25,
+        "cumple": false,
+        "motivos": [
+          "Traslado superior al máximo"
+        ],
+        "fuente": "Equipo 6 - datos sinteticos",
+        "fecha": "2026-11-05",
+        "nivel_geografico": "zona ficticia",
+        "simulado": true
+      },
+      {
+        "id": "Z06",
+        "nombre": "Zona Incompleta simulada",
+        "precio": 1400000.0,
+        "indicadores": {
+          "seguridad": 65.0,
+          "riesgos": null,
+          "vivienda": 70.0,
+          "movilidad": null,
+          "entorno": 70.0
+        },
+        "cobertura": 0.6,
+        "puntaje_zona": 39.5833,
+        "aporte_territorial": 23.75,
+        "cumple": false,
+        "motivos": [
+          "Cobertura de indicadores insuficiente",
+          "Falta indicador obligatorio: riesgos"
+        ],
+        "fuente": "Equipo 6 - datos sinteticos",
+        "fecha": "2026-11-05",
+        "nivel_geografico": "zona ficticia",
+        "simulado": true
+      }
+    ]
+  },
+  "conclusion": {
+    "resumen": "La herramienta evaluó de catalogo identificó los zonas que cumplen con los requisitos territoriales, pero descartó algunas por razones de precio y habitaciones. La zona Z06 fue descartada por cobertura de indicadores insuficiente y falta de un indicador obligatorio. Los IDs revisados son Z01, Z02, Z03, Z04, Z05 y Z06.",
+    "ids_revisados": [
+      "Z01",
+      "Z02",
+      "Z03",
+      "Z04",
+      "Z05",
+      "Z06"
+    ],
+    "ranking_ids": [],
+    "recomendacion_id": null
+  }
+}

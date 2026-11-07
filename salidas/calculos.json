@@ -1,0 +1,364 @@
+{
+  "perfil": {
+    "entrada": {
+      "descripcion": "Busco una vivienda de al menos dos habitaciones y traslado de máximo 45 minutos. Me interesa equilibrar capacidad de pago, seguridad y exposición baja a riesgos.",
+      "ingreso_mensual": 50000.0,
+      "gastos_mensuales": 22000.0,
+      "deudas_mensuales": 3000.0,
+      "reserva_mensual": 3000.0,
+      "presupuesto_maximo": 2000000.0,
+      "enganche_disponible": 450000.0,
+      "ahorro_gastos_iniciales": 120000.0,
+      "pago_maximo_usuario": 14000.0,
+      "habitaciones_minimas": 2,
+      "traslado_maximo_min": 45.0,
+      "seguridad_minima": 40.0,
+      "riesgos_minimo": 40.0,
+      "plazo_anios": 20,
+      "tasa_anual": 0.105,
+      "incremento_estres": 0.02,
+      "limite_deuda_ingreso": 0.35,
+      "enganche_minimo_pct": 0.2,
+      "gastos_iniciales_pct": 0.05,
+      "gasto_vivienda_mensual": 800.0,
+      "cobertura_minima": 0.8,
+      "pesos": {
+        "finanzas": 0.4,
+        "seguridad": 0.15,
+        "riesgos": 0.15,
+        "vivienda": 0.1,
+        "movilidad": 0.1,
+        "entorno": 0.1
+      }
+    },
+    "limite_pago": 14000.0,
+    "disponible_despues_gastos": 22000.0,
+    "limite_por_deuda": 14500.0,
+    "alertas": [],
+    "regla": "min(tope_usuario, ingreso-gastos-deudas-reserva, ingreso*limite_deuda-deudas), piso cero"
+  },
+  "zonas": {
+    "zonas": [
+      {
+        "id": "Z01",
+        "nombre": "Zona Norte simulada",
+        "precio": 1500000.0,
+        "indicadores": {
+          "seguridad": 70.0,
+          "riesgos": 80.0,
+          "vivienda": 75.0,
+          "movilidad": 70.0,
+          "entorno": 70.0
+        },
+        "cobertura": 1.0,
+        "puntaje_zona": 73.3333,
+        "aporte_territorial": 44.0,
+        "cumple": true,
+        "motivos": [],
+        "fuente": "Equipo 6 - datos sinteticos",
+        "fecha": "2026-11-05",
+        "nivel_geografico": "zona ficticia",
+        "simulado": true
+      },
+      {
+        "id": "Z02",
+        "nombre": "Zona Centro simulada",
+        "precio": 1750000.0,
+        "indicadores": {
+          "seguridad": 85.0,
+          "riesgos": 90.0,
+          "vivienda": 80.0,
+          "movilidad": 90.0,
+          "entorno": 85.0
+        },
+        "cobertura": 1.0,
+        "puntaje_zona": 86.25,
+        "aporte_territorial": 51.75,
+        "cumple": true,
+        "motivos": [],
+        "fuente": "Equipo 6 - datos sinteticos",
+        "fecha": "2026-11-05",
+        "nivel_geografico": "zona ficticia",
+        "simulado": true
+      },
+      {
+        "id": "Z03",
+        "nombre": "Zona Premium simulada",
+        "precio": 2400000.0,
+        "indicadores": {
+          "seguridad": 95.0,
+          "riesgos": 95.0,
+          "vivienda": 95.0,
+          "movilidad": 95.0,
+          "entorno": 95.0
+        },
+        "cobertura": 1.0,
+        "puntaje_zona": 95.0,
+        "aporte_territorial": 57.0,
+        "cumple": false,
+        "motivos": [
+          "Precio superior al presupuesto máximo"
+        ],
+        "fuente": "Equipo 6 - datos sinteticos",
+        "fecha": "2026-11-05",
+        "nivel_geografico": "zona ficticia",
+        "simulado": true
+      },
+      {
+        "id": "Z04",
+        "nombre": "Zona Compacta simulada",
+        "precio": 1300000.0,
+        "indicadores": {
+          "seguridad": 75.0,
+          "riesgos": 80.0,
+          "vivienda": 70.0,
+          "movilidad": 80.0,
+          "entorno": 75.0
+        },
+        "cobertura": 1.0,
+        "puntaje_zona": 76.25,
+        "aporte_territorial": 45.75,
+        "cumple": false,
+        "motivos": [
+          "Habitaciones insuficientes"
+        ],
+        "fuente": "Equipo 6 - datos sinteticos",
+        "fecha": "2026-11-05",
+        "nivel_geografico": "zona ficticia",
+        "simulado": true
+      },
+      {
+        "id": "Z05",
+        "nombre": "Zona Periferica simulada",
+        "precio": 1550000.0,
+        "indicadores": {
+          "seguridad": 70.0,
+          "riesgos": 75.0,
+          "vivienda": 80.0,
+          "movilidad": 40.0,
+          "entorno": 65.0
+        },
+        "cobertura": 1.0,
+        "puntaje_zona": 67.0833,
+        "aporte_territorial": 40.25,
+        "cumple": false,
+        "motivos": [
+          "Traslado superior al máximo"
+        ],
+        "fuente": "Equipo 6 - datos sinteticos",
+        "fecha": "2026-11-05",
+        "nivel_geografico": "zona ficticia",
+        "simulado": true
+      },
+      {
+        "id": "Z06",
+        "nombre": "Zona Incompleta simulada",
+        "precio": 1400000.0,
+        "indicadores": {
+          "seguridad": 65.0,
+          "riesgos": null,
+          "vivienda": 70.0,
+          "movilidad": null,
+          "entorno": 70.0
+        },
+        "cobertura": 0.6,
+        "puntaje_zona": 39.5833,
+        "aporte_territorial": 23.75,
+        "cumple": false,
+        "motivos": [
+          "Cobertura de indicadores insuficiente",
+          "Falta indicador obligatorio: riesgos"
+        ],
+        "fuente": "Equipo 6 - datos sinteticos",
+        "fecha": "2026-11-05",
+        "nivel_geografico": "zona ficticia",
+        "simulado": true
+      }
+    ]
+  },
+  "finanzas": {
+    "limite_pago": 14000.0,
+    "alternativas": [
+      {
+        "id": "Z01",
+        "enganche": 450000.0,
+        "capital": 1050000.0,
+        "gastos_iniciales": 75000.0,
+        "cuota_credito": 10482.99,
+        "pago_total": 11282.99,
+        "pago_estres": 12729.48,
+        "pago_plazo_corto": 12406.69,
+        "plazo_corto_anios": 15,
+        "deuda_ingreso": 0.2857,
+        "puntaje_financiero": 19.407214,
+        "cumple": true,
+        "motivos": [],
+        "estres_supera_limite": false
+      },
+      {
+        "id": "Z02",
+        "enganche": 450000.0,
+        "capital": 1300000.0,
+        "gastos_iniciales": 87500.0,
+        "cuota_credito": 12978.94,
+        "pago_total": 13778.94,
+        "pago_estres": 15569.83,
+        "pago_plazo_corto": 15170.19,
+        "plazo_corto_anios": 15,
+        "deuda_ingreso": 0.3356,
+        "puntaje_financiero": 1.579,
+        "cumple": true,
+        "motivos": [],
+        "estres_supera_limite": true
+      },
+      {
+        "id": "Z03",
+        "enganche": 450000.0,
+        "capital": 1950000.0,
+        "gastos_iniciales": 120000.0,
+        "cuota_credito": 19468.41,
+        "pago_total": 20268.41,
+        "pago_estres": 22954.74,
+        "pago_plazo_corto": 22355.28,
+        "plazo_corto_anios": 15,
+        "deuda_ingreso": 0.4654,
+        "puntaje_financiero": 0,
+        "cumple": false,
+        "motivos": [
+          "Enganche menor al mínimo del escenario",
+          "Pago mensual superior a la capacidad calculada"
+        ],
+        "estres_supera_limite": true
+      },
+      {
+        "id": "Z04",
+        "enganche": 450000.0,
+        "capital": 850000.0,
+        "gastos_iniciales": 65000.0,
+        "cuota_credito": 8486.23,
+        "pago_total": 9286.23,
+        "pago_estres": 10457.19,
+        "pago_plazo_corto": 10195.89,
+        "plazo_corto_anios": 15,
+        "deuda_ingreso": 0.2457,
+        "puntaje_financiero": 33.669786,
+        "cumple": true,
+        "motivos": [],
+        "estres_supera_limite": false
+      },
+      {
+        "id": "Z05",
+        "enganche": 450000.0,
+        "capital": 1100000.0,
+        "gastos_iniciales": 77500.0,
+        "cuota_credito": 10982.18,
+        "pago_total": 11782.18,
+        "pago_estres": 13297.55,
+        "pago_plazo_corto": 12959.39,
+        "plazo_corto_anios": 15,
+        "deuda_ingreso": 0.2956,
+        "puntaje_financiero": 15.841571,
+        "cumple": true,
+        "motivos": [],
+        "estres_supera_limite": false
+      },
+      {
+        "id": "Z06",
+        "enganche": 450000.0,
+        "capital": 950000.0,
+        "gastos_iniciales": 70000.0,
+        "cuota_credito": 9484.61,
+        "pago_total": 10284.61,
+        "pago_estres": 11593.34,
+        "pago_plazo_corto": 11301.29,
+        "plazo_corto_anios": 15,
+        "deuda_ingreso": 0.2657,
+        "puntaje_financiero": 26.5385,
+        "cumple": true,
+        "motivos": [],
+        "estres_supera_limite": false
+      }
+    ],
+    "supuesto": "Tasa, gastos y umbrales simulados; no representan una oferta bancaria."
+  },
+  "coordinacion": {
+    "estado": "con_alternativas",
+    "recomendacion_id": "Z02",
+    "ranking": [
+      {
+        "id": "Z02",
+        "nombre": "Zona Centro simulada",
+        "puntaje": 52.3816,
+        "precio": 1750000.0,
+        "pago_total": 13778.94,
+        "pago_estres": 15569.83,
+        "puntaje_zona": 86.25,
+        "puntaje_financiero": 1.579,
+        "alertas": [
+          "El escenario de estrés supera el límite mensual"
+        ],
+        "posicion": 1
+      },
+      {
+        "id": "Z01",
+        "nombre": "Zona Norte simulada",
+        "puntaje": 51.7629,
+        "precio": 1500000.0,
+        "pago_total": 11282.99,
+        "pago_estres": 12729.48,
+        "puntaje_zona": 73.3333,
+        "puntaje_financiero": 19.407214,
+        "alertas": [],
+        "posicion": 2
+      }
+    ],
+    "descartadas": [
+      {
+        "id": "Z03",
+        "nombre": "Zona Premium simulada",
+        "motivos": [
+          "Precio superior al presupuesto máximo",
+          "Enganche menor al mínimo del escenario",
+          "Pago mensual superior a la capacidad calculada"
+        ]
+      },
+      {
+        "id": "Z04",
+        "nombre": "Zona Compacta simulada",
+        "motivos": [
+          "Habitaciones insuficientes"
+        ]
+      },
+      {
+        "id": "Z05",
+        "nombre": "Zona Periferica simulada",
+        "motivos": [
+          "Traslado superior al máximo"
+        ]
+      },
+      {
+        "id": "Z06",
+        "nombre": "Zona Incompleta simulada",
+        "motivos": [
+          "Cobertura de indicadores insuficiente",
+          "Falta indicador obligatorio: riesgos"
+        ]
+      }
+    ],
+    "pesos": {
+      "finanzas": 0.4,
+      "seguridad": 0.15,
+      "riesgos": 0.15,
+      "vivienda": 0.1,
+      "movilidad": 0.1,
+      "entorno": 0.1
+    },
+    "limite_pago": 14000.0,
+    "limitaciones": [
+      "Datos y condiciones financieras simulados para clase.",
+      "La evaluación corresponde a la vivienda representativa de cada zona, no a toda su oferta.",
+      "No es una oferta ni una aprobación de crédito.",
+      "Las explicaciones del LLM requieren revisión humana."
+    ]
+  }
+}
