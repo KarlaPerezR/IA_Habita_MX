@@ -1,5 +1,5 @@
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-let data, initialProfile, selected='Z02', scenario='base', filter='viable';
+let data, initialProfile, selected='Z02', scenario='base', filter='viable', configuringFirstTime=false;
 const money=n=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:n%1?2:0}).format(n);
 const names={Z01:'Parque Norte',Z02:'Distrito Central',Z03:'Distrito Premium',Z04:'Colonia Compacta',Z05:'Corredor Periférico',Z06:'Zona en evaluación'};
 const places={Z01:'Gustavo A. Madero, CDMX',Z02:'Cuauhtémoc, CDMX',Z03:'Miguel Hidalgo, CDMX',Z04:'Benito Juárez, CDMX',Z05:'Iztapalapa, CDMX',Z06:'Álvaro Obregón, CDMX'};
@@ -29,7 +29,8 @@ function render(){
   if(count){detail(data.recomendacion_id)}else{detail(null);selected=data.zonas[0]?.id;property()}applyFilter();bindDynamic();if($('#emptyAdjust'))$('#emptyAdjust').onclick=openProfile;
 }
 function fillForm(profile){const form=$('#profileForm');for(const [key,value] of Object.entries(profile)){if(form.elements[key])form.elements[key].value=value}form.elements.tasa_anual_pct.value=(profile.tasa_anual*100).toFixed(1)}
-function openProfile(){fillForm(data.perfil);$('#formError').textContent='';$('#profileDialog').showModal()}
+function showFirstRun(){configuringFirstTime=true;document.body.classList.add('first-run');fillForm(data.perfil);$('#formError').textContent='';$('#profileDialog').show()}
+function openProfile(){configuringFirstTime=false;document.body.classList.remove('first-run');fillForm(data.perfil);$('#formError').textContent='';$('#profileDialog').showModal()}
 const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 function resetAnalysis(){
   const dialog=$('#analysisDialog');dialog.classList.remove('finished');$('#analysisTitle').textContent='Analizando tu perfil';$('#analysisCopy').textContent='Los especialistas revisan tus límites antes de ordenar alternativas.';$('#analysisProgress').style.width='8%';$('#viewResults').hidden=true;
@@ -45,15 +46,15 @@ function finishAnalysis(pipeline){
 async function submitProfile(event){
   event.preventDefault();const form=event.currentTarget;if(!form.reportValidity())return;const button=$('#analyzeButton');form.classList.add('loading');button.textContent='Calculando…';$('#formError').textContent='';
   const payload={};for(const element of form.elements){if(element.name)payload[element.name]=Number(element.value)}payload.tasa_anual=payload.tasa_anual_pct/100;delete payload.tasa_anual_pct;
-  $('#profileDialog').close();resetAnalysis();$('#analysisDialog').showModal();let stage=0;activateStage(stage);const ticker=setInterval(()=>{if(stage<3)activateStage(++stage)},430);
-  try{const request=fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(async response=>{const result=await response.json();if(!response.ok)throw Error(result.error||'No se pudo recalcular.');return result});const [result]=await Promise.all([request,wait(1900)]);clearInterval(ticker);data=result;scenario='base';$$('[data-scenario]').forEach(x=>x.classList.toggle('active',x.dataset.scenario==='base'));render();finishAnalysis(data.pipeline)}catch(error){clearInterval(ticker);$('#analysisDialog').close();openProfile();$('#formError').textContent=error.message}finally{form.classList.remove('loading');button.textContent='Recalcular análisis'}
+  const wasFirstRun=configuringFirstTime;$('#profileDialog').close();document.body.classList.remove('first-run');resetAnalysis();$('#analysisDialog').showModal();let stage=0;activateStage(stage);const ticker=setInterval(()=>{if(stage<3)activateStage(++stage)},430);
+  try{const request=fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(async response=>{const result=await response.json();if(!response.ok)throw Error(result.error||'No se pudo recalcular.');return result});const [result]=await Promise.all([request,wait(1900)]);clearInterval(ticker);data=result;scenario='base';localStorage.setItem('habimas-configured','true');$$('[data-scenario]').forEach(x=>x.classList.toggle('active',x.dataset.scenario==='base'));render();finishAnalysis(data.pipeline)}catch(error){clearInterval(ticker);$('#analysisDialog').close();wasFirstRun?showFirstRun():openProfile();$('#formError').textContent=error.message}finally{form.classList.remove('loading');button.textContent='Recalcular análisis'}
 }
 function showToast(message){const t=$('#toast');t.textContent=message;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
-async function init(){try{const r=await fetch('/api/dashboard');if(!r.ok)throw Error();data=await r.json();initialProfile=structuredClone(data.perfil);render()}catch{$('.page').innerHTML='<div class="empty-state" style="margin-top:4rem"><h3>No se pudo cargar el análisis</h3><p>Reinicia el servidor con <code>python3 server.py</code>.</p></div>'}}
+async function init(){try{const r=await fetch('/api/dashboard');if(!r.ok)throw Error();data=await r.json();initialProfile=structuredClone(data.perfil);render();if(localStorage.getItem('habimas-configured')!=='true'||new URLSearchParams(location.search).has('setup'))showFirstRun()}catch{$('.page').innerHTML='<div class="empty-state" style="margin-top:4rem"><h3>No se pudo cargar el análisis</h3><p>Reinicia el servidor con <code>python3 server.py</code>.</p></div>'}}
 
 $$('[data-scenario]').forEach(b=>b.onclick=()=>{scenario=b.dataset.scenario;$$('[data-scenario]').forEach(x=>x.classList.toggle('active',x===b));render()});
 $$('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;$$('[data-filter]').forEach(x=>x.classList.toggle('active',x===b));applyFilter()});
 $$('.pin').forEach(p=>p.onclick=()=>detail(p.dataset.zone));$('#discardedButton').onclick=()=>{$('#discardedList').hidden=!$('#discardedList').hidden;$('#discardedButton em').textContent=$('#discardedList').hidden?'Ver motivos':'Ocultar motivos'};
 $('#openMenu').onclick=()=>{$('#sidebar').classList.add('open');$('#scrim').classList.add('show')};$('#closeMenu').onclick=$('#scrim').onclick=()=>{$('#sidebar').classList.remove('open');$('#scrim').classList.remove('show')};$$('nav a').forEach(a=>a.onclick=()=>{$$('nav a').forEach(x=>x.classList.remove('active'));a.classList.add('active');$('#closeMenu').click()});
 $('#profileButton').onclick=openProfile;$('#closeProfile').onclick=()=>$('#profileDialog').close();$('#resetProfile').onclick=()=>fillForm(initialProfile);$('#profileForm').onsubmit=submitProfile;init();
-$('#viewResults').onclick=()=>{$('#analysisDialog').close();window.scrollTo({top:0,behavior:'smooth'});showToast(`Análisis actualizado: ${data.ranking.length} alternativas viables.`)};
+$('#viewResults').onclick=()=>{$('#analysisDialog').close();history.replaceState({},'',location.pathname);window.scrollTo({top:0,behavior:'smooth'});showToast(`Análisis actualizado: ${data.ranking.length} alternativas viables.`)};

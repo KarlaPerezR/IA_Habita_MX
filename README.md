@@ -14,6 +14,8 @@ Abre `http://127.0.0.1:8000`. La API local `GET /api/dashboard` integra `calculo
 
 Durante el recálculo se muestra el estado de las cuatro etapas reales: perfil, zonas, finanzas y coordinación. La interfaz identifica este recorrido como **motor determinista local**; el flujo CrewAI/Ollama de `habita/equipo.py` no se ejecuta desde la web todavía.
 
+En el primer acceso, el formulario de perfil ocupa la pantalla completa y el tablero permanece oculto hasta completar el análisis. El navegador conserva únicamente la marca local `habimas-configured`; los parámetros siguen validándose y calculándose en el servidor.
+
 Esta guía explica cómo trabajar desde **Visual Studio Code en Windows**, con Anaconda para administrar Python y PowerShell como terminal integrada. El catálogo contiene seis zonas ficticias y condiciones financieras simuladas.
 
 ## 1. Preparar Visual Studio Code
