@@ -2,6 +2,16 @@
 
 Sistema multiagente académico para evaluar alternativas de vivienda y escenarios de financiamiento. Utiliza **Python 3.11, CrewAI y Ollama local** con cuatro agentes: Perfil del Usuario, Evaluación de Zona, Financiero y Coordinador. Built with Llama.
 
+## Interfaz web
+
+La rama `interfaz` incorpora un tablero responsivo conectado a los resultados reales del motor. Para ejecutarlo desde la raíz del proyecto:
+
+```powershell
+python server.py
+```
+
+Abre `http://127.0.0.1:8000`. La API local `GET /api/dashboard` integra `calculos.json` y `resultado.json`; los escenarios Base, Estrés y 15 años, el mapa, el ranking, los descartes y el detalle se actualizan con esos datos.
+
 Esta guía explica cómo trabajar desde **Visual Studio Code en Windows**, con Anaconda para administrar Python y PowerShell como terminal integrada. El catálogo contiene seis zonas ficticias y condiciones financieras simuladas.
 
 ## 1. Preparar Visual Studio Code

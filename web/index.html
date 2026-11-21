@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173d33">
+  <title>Habita MX · Decisiones con evidencia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <button class="icon-button close-menu" id="closeMenu" aria-label="Cerrar menú">×</button>
+    <a class="brand" href="#inicio"><span class="brand-mark">H</span><span><b>Habita <i>MX</i></b><small>DECISIONES CON EVIDENCIA</small></span></a>
+    <nav aria-label="Navegación principal">
+      <a class="active" href="#inicio">⌂ <span>Resumen</span></a>
+      <a href="#mapa">⌖ <span>Mapa de inmuebles</span></a>
+      <a href="#comparador">▤ <span>Comparador</span></a>
+      <a href="#agentes">◇ <span>Cómo funciona</span></a>
+    </nav>
+    <div class="sidebar-note"><strong>Prototipo académico</strong><p>Datos y escenarios simulados.<br>No constituye una oferta financiera.</p><small>EQUIPO 6 · IA · 2026</small></div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <main>
+    <header class="topbar">
+      <button class="icon-button menu-button" id="openMenu" aria-label="Abrir menú">☰</button>
+      <div><span>Bienvenido de vuelta</span><h1>Tu análisis de vivienda</h1></div>
+      <button class="icon-button" id="profileButton" aria-label="Ajustar perfil">⚙</button>
+    </header>
+
+    <div class="page" id="inicio">
+      <section class="hero">
+        <p class="eyebrow"><span></span> ANÁLISIS COMPLETADO</p>
+        <h2><span id="viableCount">2</span> alternativas se ajustan a tu perfil</h2>
+        <p>Comparamos tus límites financieros con indicadores de zona. Primero cumplimos tus requisitos; después ordenamos por afinidad.</p>
+        <div class="scenario-tabs" role="tablist" aria-label="Escenario financiero">
+          <button class="active" data-scenario="base">Base</button>
+          <button data-scenario="stress">Estrés</button>
+          <button data-scenario="short">15 años</button>
+        </div>
+        <div class="stats">
+          <article><div class="stat-icon">▣</div><div><span>Capacidad mensual</span><strong id="limit">$14,000</strong><small>Límite obligatorio</small></div></article>
+          <article><div class="stat-icon">⌂</div><div><span>Presupuesto máximo</span><strong id="budget">$2,000,000</strong><small>Precio de vivienda</small></div></article>
+          <article><div class="stat-icon">♢</div><div><span>Alternativas viables</span><strong><span id="viableStat">2</span> de <span id="totalStat">6</span></strong><small>Tras aplicar restricciones</small></div></article>
+        </div>
+      </section>
+
+      <section id="mapa">
+        <p class="eyebrow">EXPLORA POR UBICACIÓN</p>
+        <div class="section-heading"><h2>Inmuebles en Ciudad de México</h2><div class="filter-tabs"><button class="active" data-filter="viable">Viables (<span id="viableFilter">2</span>)</button><button data-filter="all">Todos (<span id="allFilter">6</span>)</button></div></div>
+        <div class="property-layout">
+          <div class="map-card">
+            <div class="map" aria-label="Mapa ilustrativo de Ciudad de México">
+              <div class="roads"></div><div class="park"></div>
+              <button class="pin pin-one" data-zone="Z01"><span>$1,500,000</span>⌂</button>
+              <button class="pin pin-two active" data-zone="Z02"><span>$1,750,000</span>⌂</button>
+              <div class="zoom">+<hr>−</div><small>Ubicaciones aproximadas · Datos simulados</small>
+            </div>
+            <div class="property-summary" id="propertySummary"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="comparador">
+        <p class="eyebrow">RANKING PERSONALIZADO</p><h2>Mejores coincidencias</h2>
+        <div class="ranking" id="ranking"></div>
+        <button class="discarded" id="discardedButton"><span>×</span><b id="discardedCount">4 alternativas descartadas</b><em>Ver motivos</em></button>
+        <div class="discarded-list" id="discardedList" hidden></div>
+        <article class="detail" id="detail"></article>
+      </section>
+
+      <section class="agents" id="agentes">
+        <p class="eyebrow gold">ARQUITECTURA MULTIAGENTE</p>
+        <h2>Cuatro especialistas.<br>Una decisión explicable.</h2>
+        <p>Cada agente revisa una parte del problema. Los cálculos son deterministas y las restricciones nunca se compensan con una buena puntuación.</p>
+        <div class="agent-grid">
+          <article><small>01</small><b>Perfil</b><span>Define límites</span><i>⌂</i></article>
+          <article><small>02</small><b>Zona</b><span>Evalúa contexto</span><i>⌖</i></article>
+          <article><small>03</small><b>Finanzas</b><span>Simula pagos</span><i>▣</i></article>
+          <article><small>04</small><b>Coordinador</b><span>Integra evidencia</span><i>♧</i></article>
+        </div>
+        <footer><span>Motor: Llama 3.2 local</span><span>Flujo secuencial</span><span>Datos simulados</span><span>Sin contratación ni compra</span></footer>
+      </section>
+    </div>
+  </main>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="/app.js" defer></script>
+</body>
+</html>
