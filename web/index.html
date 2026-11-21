@@ -101,6 +101,20 @@
       <p class="form-error" id="formError" role="alert"></p><div class="dialog-actions"><button type="button" class="secondary" id="resetProfile">Restablecer</button><button type="submit" class="primary" id="analyzeButton">Recalcular análisis</button></div>
     </form>
   </dialog>
+  <dialog class="analysis-dialog" id="analysisDialog" aria-labelledby="analysisTitle">
+    <div class="analysis-visual"><div class="pulse-core">H</div><i></i><i></i><i></i></div>
+    <p class="eyebrow">PROCESANDO EVIDENCIA</p><h2 id="analysisTitle">Analizando tu perfil</h2>
+    <p class="analysis-copy" id="analysisCopy">Los especialistas revisan tus límites antes de ordenar alternativas.</p>
+    <div class="progress-track"><span id="analysisProgress"></span></div>
+    <div class="analysis-steps">
+      <article data-stage="perfil"><span class="step-state">1</span><div><b>Agente de perfil</b><small>Valida límites y capacidad mensual</small></div><em>En espera</em></article>
+      <article data-stage="zonas"><span class="step-state">2</span><div><b>Agente de zona</b><small>Evalúa contexto y cobertura</small></div><em>En espera</em></article>
+      <article data-stage="finanzas"><span class="step-state">3</span><div><b>Agente financiero</b><small>Simula pagos y escenarios</small></div><em>En espera</em></article>
+      <article data-stage="coordinacion"><span class="step-state">4</span><div><b>Coordinador</b><small>Integra evidencia y genera el ranking</small></div><em>En espera</em></article>
+    </div>
+    <div class="mode-note"><span>◇</span><div><b>Modo de ejecución</b><small>Motor determinista local · sin llamada a Ollama en esta ejecución</small></div></div>
+    <button class="primary results-button" id="viewResults" hidden>Ver resultados</button>
+  </dialog>
   <div class="toast" id="toast" role="status"></div>
   <script src="/app.js" defer></script>
 </body>

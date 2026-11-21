@@ -2,9 +2,10 @@
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import json
+import time
 from pydantic import ValidationError
 from habita.modelos import Perfil
-from habita.motor import calcular_todo, cargar_zonas
+from habita.motor import analizar_perfil, cargar_zonas, evaluar_zonas, evaluar_finanzas, integrar
 
 ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
@@ -25,8 +26,20 @@ def analyze(profile_updates):
     allowed = {"ingreso_mensual", "gastos_mensuales", "deudas_mensuales", "reserva_mensual", "presupuesto_maximo", "enganche_disponible", "ahorro_gastos_iniciales", "pago_maximo_usuario", "habitaciones_minimas", "traslado_maximo_min", "seguridad_minima", "riesgos_minimo", "plazo_anios", "tasa_anual"}
     current.update({key: value for key, value in profile_updates.items() if key in allowed})
     profile = Perfil.model_validate(current)
-    calculations = calcular_todo(profile, cargar_zonas(OUTPUT / "entrada_zonas.csv"))
-    return {**calculations["coordinacion"], "perfil": calculations["perfil"]["entrada"], "zonas": calculations["zonas"]["zonas"], "finanzas": calculations["finanzas"]}
+    zones = cargar_zonas(OUTPUT / "entrada_zonas.csv")
+    pipeline = []
+
+    def run(stage, label, operation):
+        started = time.perf_counter()
+        result = operation()
+        pipeline.append({"stage": stage, "label": label, "status": "completed", "duration_ms": round((time.perf_counter() - started) * 1000, 2)})
+        return result
+
+    profile_data = run("perfil", "Perfil y capacidad", lambda: analizar_perfil(profile))
+    zone_data = run("zonas", "Indicadores de zona", lambda: evaluar_zonas(profile, zones))
+    finance_data = run("finanzas", "Escenarios financieros", lambda: evaluar_finanzas(profile, zones, profile_data))
+    coordination = run("coordinacion", "Integración y ranking", lambda: integrar(profile, zone_data, finance_data))
+    return {**coordination, "perfil": profile_data["entrada"], "zonas": zone_data["zonas"], "finanzas": finance_data, "pipeline": pipeline, "execution_mode": "deterministic"}
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):

@@ -30,10 +30,23 @@ function render(){
 }
 function fillForm(profile){const form=$('#profileForm');for(const [key,value] of Object.entries(profile)){if(form.elements[key])form.elements[key].value=value}form.elements.tasa_anual_pct.value=(profile.tasa_anual*100).toFixed(1)}
 function openProfile(){fillForm(data.perfil);$('#formError').textContent='';$('#profileDialog').showModal()}
+const wait=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+function resetAnalysis(){
+  const dialog=$('#analysisDialog');dialog.classList.remove('finished');$('#analysisTitle').textContent='Analizando tu perfil';$('#analysisCopy').textContent='Los especialistas revisan tus límites antes de ordenar alternativas.';$('#analysisProgress').style.width='8%';$('#viewResults').hidden=true;
+  $$('.analysis-steps article').forEach((item,index)=>{item.className='';item.querySelector('.step-state').textContent=index+1;item.querySelector('em').textContent='En espera'});
+}
+function activateStage(index){
+  const steps=$$('.analysis-steps article');steps.forEach((item,i)=>{if(i<index){item.className='complete';item.querySelector('.step-state').textContent='✓';item.querySelector('em').textContent='Completado'}else if(i===index){item.className='active';item.querySelector('em').textContent='Analizando…'}});$('#analysisProgress').style.width=`${Math.min(88,18+index*23)}%`;
+}
+function finishAnalysis(pipeline){
+  $$('.analysis-steps article').forEach((item,index)=>{item.className='complete';item.querySelector('.step-state').textContent='✓';const duration=pipeline?.[index]?.duration_ms;item.querySelector('em').textContent=duration==null?'Completado':`Completado · ${duration} ms`});
+  $('#analysisProgress').style.width='100%';$('#analysisTitle').textContent='Análisis completado';$('#analysisCopy').textContent=`Encontramos ${data.ranking.length} ${data.ranking.length===1?'alternativa viable':'alternativas viables'} después de aplicar todas tus restricciones.`;$('#analysisDialog').classList.add('finished');$('#viewResults').hidden=false;
+}
 async function submitProfile(event){
   event.preventDefault();const form=event.currentTarget;if(!form.reportValidity())return;const button=$('#analyzeButton');form.classList.add('loading');button.textContent='Calculando…';$('#formError').textContent='';
   const payload={};for(const element of form.elements){if(element.name)payload[element.name]=Number(element.value)}payload.tasa_anual=payload.tasa_anual_pct/100;delete payload.tasa_anual_pct;
-  try{const response=await fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});const result=await response.json();if(!response.ok)throw Error(result.error||'No se pudo recalcular.');data=result;scenario='base';$$('[data-scenario]').forEach(x=>x.classList.toggle('active',x.dataset.scenario==='base'));render();$('#profileDialog').close();showToast(`Análisis actualizado: ${data.ranking.length} alternativas viables.`)}catch(error){$('#formError').textContent=error.message}finally{form.classList.remove('loading');button.textContent='Recalcular análisis'}
+  $('#profileDialog').close();resetAnalysis();$('#analysisDialog').showModal();let stage=0;activateStage(stage);const ticker=setInterval(()=>{if(stage<3)activateStage(++stage)},430);
+  try{const request=fetch('/api/analyze',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)}).then(async response=>{const result=await response.json();if(!response.ok)throw Error(result.error||'No se pudo recalcular.');return result});const [result]=await Promise.all([request,wait(1900)]);clearInterval(ticker);data=result;scenario='base';$$('[data-scenario]').forEach(x=>x.classList.toggle('active',x.dataset.scenario==='base'));render();finishAnalysis(data.pipeline)}catch(error){clearInterval(ticker);$('#analysisDialog').close();openProfile();$('#formError').textContent=error.message}finally{form.classList.remove('loading');button.textContent='Recalcular análisis'}
 }
 function showToast(message){const t=$('#toast');t.textContent=message;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
 async function init(){try{const r=await fetch('/api/dashboard');if(!r.ok)throw Error();data=await r.json();initialProfile=structuredClone(data.perfil);render()}catch{$('.page').innerHTML='<div class="empty-state" style="margin-top:4rem"><h3>No se pudo cargar el análisis</h3><p>Reinicia el servidor con <code>python3 server.py</code>.</p></div>'}}
@@ -43,3 +56,4 @@ $$('[data-filter]').forEach(b=>b.onclick=()=>{filter=b.dataset.filter;$$('[data-
 $$('.pin').forEach(p=>p.onclick=()=>detail(p.dataset.zone));$('#discardedButton').onclick=()=>{$('#discardedList').hidden=!$('#discardedList').hidden;$('#discardedButton em').textContent=$('#discardedList').hidden?'Ver motivos':'Ocultar motivos'};
 $('#openMenu').onclick=()=>{$('#sidebar').classList.add('open');$('#scrim').classList.add('show')};$('#closeMenu').onclick=$('#scrim').onclick=()=>{$('#sidebar').classList.remove('open');$('#scrim').classList.remove('show')};$$('nav a').forEach(a=>a.onclick=()=>{$$('nav a').forEach(x=>x.classList.remove('active'));a.classList.add('active');$('#closeMenu').click()});
 $('#profileButton').onclick=openProfile;$('#closeProfile').onclick=()=>$('#profileDialog').close();$('#resetProfile').onclick=()=>fillForm(initialProfile);$('#profileForm').onsubmit=submitProfile;init();
+$('#viewResults').onclick=()=>{$('#analysisDialog').close();window.scrollTo({top:0,behavior:'smooth'});showToast(`Análisis actualizado: ${data.ranking.length} alternativas viables.`)};

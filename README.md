@@ -12,6 +12,8 @@ python server.py
 
 Abre `http://127.0.0.1:8000`. La API local `GET /api/dashboard` integra `calculos.json` y `resultado.json`; los escenarios Base, Estrés y 15 años, el mapa, el ranking, los descartes y el detalle se actualizan con esos datos. El formulario **Ajustar perfil** usa `POST /api/analyze` para validar el perfil y ejecutar de nuevo el motor determinista en memoria, sin modificar la evidencia original.
 
+Durante el recálculo se muestra el estado de las cuatro etapas reales: perfil, zonas, finanzas y coordinación. La interfaz identifica este recorrido como **motor determinista local**; el flujo CrewAI/Ollama de `habita/equipo.py` no se ejecuta desde la web todavía.
+
 Esta guía explica cómo trabajar desde **Visual Studio Code en Windows**, con Anaconda para administrar Python y PowerShell como terminal integrada. El catálogo contiene seis zonas ficticias y condiciones financieras simuladas.
 
 ## 1. Preparar Visual Studio Code
