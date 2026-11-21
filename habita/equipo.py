@@ -1,6 +1,7 @@
 """Cuatro Agent, cuatro Task y un Crew secuencial, inspirados en el notebook base."""
 import json
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -45,6 +46,25 @@ ROLES = {
                      "compromisos y límites sin alterar los datos de los especialistas.",
     },
 }
+
+def extraer_resumen_llm(raw: str) -> str:
+    """Recupera sólo el texto narrativo; nunca cifras estructuradas ni IDs del modelo."""
+    text = raw.strip()
+    if text.startswith("```"):
+        lines = text.splitlines()
+        text = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:]).strip()
+    try:
+        content = json.loads(text)
+        if isinstance(content, dict) and set(content) == {"formato_respuesta"}:
+            content = content["formato_respuesta"]
+        summary = content.get("resumen") if isinstance(content, dict) else None
+    except json.JSONDecodeError:
+        match = re.search(r'["\']?resumen["\']?\s*:\s*["\']?(.*)', text, re.DOTALL | re.IGNORECASE)
+        summary = match.group(1) if match else text
+        summary = re.sub(r'["\'}\s]+$', '', summary).replace('\\"', '"').strip()
+    if not isinstance(summary, str) or len(summary.strip()) < 20:
+        raise ValueError("El resumen del agente está vacío o es demasiado corto.")
+    return summary.strip()[:1800]
 
 
 class Bitacora:
@@ -130,10 +150,7 @@ def construir_crew(perfil: Perfil, zonas: list[Zona], llm: LLM, bitacora: Bitaco
             try:
                 if etapa not in estado:
                     raise ValueError("Primero debes llamar a tu herramienta, sin argumentos.")
-                content = json.loads(salida.raw)
-                if isinstance(content, dict) and set(content) == {"formato_respuesta"}:
-                    content = content["formato_respuesta"]
-                summary = content.get("resumen") if isinstance(content, dict) else None
+                summary = extraer_resumen_llm(salida.raw)
                 canonical = {"resumen": summary,
                              "ids_revisados": [] if etapa == "perfil" else ids,
                              "ranking_ids": [z["id"] for z in estado[etapa]["ranking"]] if etapa == "coordinacion" else [],
