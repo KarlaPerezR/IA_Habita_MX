@@ -20,6 +20,16 @@ El mapa usa Leaflet con cartografía de OpenStreetMap, zoom y marcadores selecci
 
 Los perfiles de cliente se guardan por `ID de cliente` y nombre en `.runtime/client_profiles.json`. El mismo ID actualiza el registro existente; **Nuevo perfil** abre una configuración limpia y el selector permite recuperar perfiles previamente guardados.
 
+## Datos CDMX y PostGIS
+
+El primer alcance de datos usa 20 viviendas simuladas en `datos/viviendas_simuladas_cdmx.csv`; no representan anuncios vigentes. Valida el catálogo sin instalar dependencias:
+
+```powershell
+python pipeline/load_simulated_homes.py --validate-only
+```
+
+Para una base local, inicia `docker-compose.data.yml`, instala `requirements-data.txt`, copia las variables de `.env.data.example` a tu gestor local de secretos y ejecuta el cargador con `DATABASE_URL` definido. El cargador crea el esquema PostGIS y hace una carga idempotente. La definición completa de indicadores está en `docs/metodologia_mvp_cdmx.md`.
+
 Esta guía explica cómo trabajar desde **Visual Studio Code en Windows**, con Anaconda para administrar Python y PowerShell como terminal integrada. El catálogo contiene seis zonas ficticias y condiciones financieras simuladas.
 
 ## 1. Preparar Visual Studio Code

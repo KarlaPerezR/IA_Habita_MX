@@ -45,6 +45,11 @@ class Perfil(Contrato):
     pago_maximo_usuario: Monto
     habitaciones_minimas: int = Field(ge=1, le=20)
     traslado_maximo_min: Annotated[float, Field(gt=0)]
+    destino_nombre: str = Field(default="Centro de trabajo", min_length=2, max_length=160)
+    destino_latitud: float = Field(default=19.4326, ge=19.0, le=20.0)
+    destino_longitud: float = Field(default=-99.1332, ge=-100.0, le=-98.0)
+    modo_traslado: str = Field(default="transporte_publico", pattern=r"^(transporte_publico|automovil|bicicleta|caminando)$")
+    hora_salida: str = Field(default="08:00", pattern=r"^([01][0-9]|2[0-3]):[0-5][0-9]$")
     seguridad_minima: Puntaje
     riesgos_minimo: Puntaje
     plazo_anios: int = Field(ge=1, le=40)

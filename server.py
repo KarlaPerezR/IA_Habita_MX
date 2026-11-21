@@ -42,16 +42,17 @@ def save_profile(client_id, name, profile):
 def dashboard():
     calculations = json.loads((OUTPUT / "calculos.json").read_text(encoding="utf-8"))
     result = json.loads((OUTPUT / "resultado.json").read_text(encoding="utf-8"))["resultado"]
+    normalized_profile = Perfil.model_validate(calculations["perfil"]["entrada"]).model_dump(mode="json")
     return {
         **result,
-        "perfil": calculations["perfil"]["entrada"],
+        "perfil": normalized_profile,
         "zonas": calculations["zonas"]["zonas"],
         "finanzas": calculations["finanzas"],
     }
 
 def analyze(profile_updates):
     current = dashboard()["perfil"]
-    allowed = {"ingreso_mensual", "gastos_mensuales", "deudas_mensuales", "reserva_mensual", "presupuesto_maximo", "enganche_disponible", "ahorro_gastos_iniciales", "pago_maximo_usuario", "habitaciones_minimas", "traslado_maximo_min", "seguridad_minima", "riesgos_minimo", "plazo_anios", "tasa_anual"}
+    allowed = {"ingreso_mensual", "gastos_mensuales", "deudas_mensuales", "reserva_mensual", "presupuesto_maximo", "enganche_disponible", "ahorro_gastos_iniciales", "pago_maximo_usuario", "habitaciones_minimas", "traslado_maximo_min", "destino_nombre", "destino_latitud", "destino_longitud", "modo_traslado", "hora_salida", "seguridad_minima", "riesgos_minimo", "plazo_anios", "tasa_anual"}
     current.update({key: value for key, value in profile_updates.items() if key in allowed})
     profile = Perfil.model_validate(current)
     zones = cargar_zonas(OUTPUT / "entrada_zonas.csv")
