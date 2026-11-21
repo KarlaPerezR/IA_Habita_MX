@@ -43,7 +43,7 @@ def checks() -> list[tuple[str, str, dict[str, str]]]:
         raise ValueError("Faltan variables: " + ", ".join(missing))
     return [
         ("Banxico SIE", "https://www.banxico.org.mx/SieAPIRest/service/v1/series/SF60648/datos/oportuno", {"Bmx-Token": banxico}),
-        ("INEGI DENUE", f"https://www.inegi.org.mx/app/api/denue/v1/consulta/Buscar/cafeteria/19.4326,-99.1332/1000/{quote(denue)}", {}),
+        ("INEGI DENUE", f"https://www.inegi.org.mx/app/api/denue/v1/consulta/Ficha/34185/{quote(denue)}", {}),
         ("INEGI Indicadores", f"https://www.inegi.org.mx/app/api/indicadores/desarrolladores/jsonxml/INDICATOR/1002000001/es/09/true/BISE/2.0/{quote(indicadores)}?type=json", {}),
     ]
 
