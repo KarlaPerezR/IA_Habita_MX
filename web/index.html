@@ -21,6 +21,7 @@
       <a href="#comparador">▤ <span>Comparador</span></a>
       <a href="#agentes">◇ <span>Cómo funciona</span></a>
     </nav>
+    <button class="new-profile" id="newProfileButton"><span>＋</span> Nuevo perfil</button>
     <div class="sidebar-note"><strong>Prototipo académico</strong><p>Datos y escenarios simulados.<br>No constituye una oferta financiera.</p><small>EQUIPO 6 · IA · 2026</small></div>
   </aside>
   <div class="scrim" id="scrim"></div>
@@ -28,7 +29,7 @@
   <main>
     <header class="topbar">
       <button class="icon-button menu-button" id="openMenu" aria-label="Abrir menú">☰</button>
-      <div><span>Bienvenido de vuelta</span><h1>Tu análisis de vivienda</h1></div>
+      <div><span id="currentClient">Bienvenido de vuelta</span><h1>Tu análisis de vivienda</h1></div>
       <button class="icon-button" id="profileButton" aria-label="Ajustar perfil">⚙</button>
     </header>
 
@@ -86,6 +87,8 @@
     <form id="profileForm">
       <div class="setup-brand"><span class="brand-mark">H</span><span><b>Habita <i>MX</i></b><small>DECISIONES CON EVIDENCIA</small></span></div>
       <div class="dialog-head"><div><p class="eyebrow">PERSONALIZA EL ANÁLISIS</p><h2 id="profileTitle">Ajustar perfil</h2><p>Modifica tus límites y recalcularemos las seis alternativas con el motor de HABIMAS.</p></div><button type="button" class="icon-button" id="closeProfile" aria-label="Cerrar">×</button></div>
+      <div class="saved-client"><label>Perfiles guardados<select id="savedProfileSelect"><option value="">Selecciona un cliente</option></select></label><button type="button" class="secondary" id="loadProfileButton">Cargar perfil</button></div>
+      <div class="client-grid"><label>ID de cliente<input name="client_id" type="text" minlength="2" maxlength="40" pattern="[A-Za-z0-9_-]+" placeholder="Ej. CLI-001" required></label><label>Nombre del cliente<input name="client_name" type="text" minlength="2" maxlength="100" placeholder="Nombre completo" required></label></div>
       <div class="form-grid">
         <label>Ingreso mensual <span>MXN</span><input name="ingreso_mensual" type="number" min="1" step="1" required></label><label>Gastos mensuales <span>MXN</span><input name="gastos_mensuales" type="number" min="0" step="500" required></label>
         <label>Deudas mensuales <span>MXN</span><input name="deudas_mensuales" type="number" min="0" step="500" required></label><label>Reserva mensual <span>MXN</span><input name="reserva_mensual" type="number" min="0" step="500" required></label>

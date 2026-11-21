@@ -2,7 +2,11 @@
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import json
+import re
+import threading
 import time
+from datetime import datetime, timezone
+from urllib.parse import urlparse
 from pydantic import ValidationError
 from habita.modelos import Perfil
 from habita.motor import analizar_perfil, cargar_zonas, evaluar_zonas, evaluar_finanzas, integrar
@@ -10,6 +14,30 @@ from habita.motor import analizar_perfil, cargar_zonas, evaluar_zonas, evaluar_f
 ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
 OUTPUT = ROOT / "salidas"
+PROFILE_STORE = ROOT / ".runtime" / "client_profiles.json"
+PROFILE_LOCK = threading.Lock()
+
+def profiles():
+    if not PROFILE_STORE.exists():
+        return []
+    return json.loads(PROFILE_STORE.read_text(encoding="utf-8"))
+
+def save_profile(client_id, name, profile):
+    client_id, name = str(client_id).strip(), str(name).strip()
+    if not re.fullmatch(r"[A-Za-z0-9_-]{2,40}", client_id):
+        raise ValueError("El ID de cliente debe tener entre 2 y 40 caracteres: letras, números, guion o guion bajo.")
+    if not 2 <= len(name) <= 100:
+        raise ValueError("El nombre del cliente debe tener entre 2 y 100 caracteres.")
+    record = {"client_id": client_id, "name": name, "profile": profile, "updated_at": datetime.now(timezone.utc).isoformat()}
+    with PROFILE_LOCK:
+        records = [item for item in profiles() if item["client_id"] != client_id]
+        records.append(record)
+        records.sort(key=lambda item: item["name"].casefold())
+        PROFILE_STORE.parent.mkdir(parents=True, exist_ok=True)
+        temporary = PROFILE_STORE.with_suffix(".tmp")
+        temporary.write_text(json.dumps(records, ensure_ascii=False, indent=2), encoding="utf-8")
+        temporary.replace(PROFILE_STORE)
+    return {key: record[key] for key in ("client_id", "name", "updated_at")}
 
 def dashboard():
     calculations = json.loads((OUTPUT / "calculos.json").read_text(encoding="utf-8"))
@@ -46,8 +74,10 @@ class Handler(SimpleHTTPRequestHandler):
         super().__init__(*args, directory=WEB, **kwargs)
 
     def do_GET(self):
-        if self.path == "/api/dashboard":
-            payload = json.dumps(dashboard(), ensure_ascii=False).encode()
+        path = urlparse(self.path).path
+        if path in {"/api/dashboard", "/api/profiles"}:
+            response = dashboard() if path == "/api/dashboard" else {"profiles": profiles()}
+            payload = json.dumps(response, ensure_ascii=False).encode()
             self.send_response(200)
             self.send_header("Content-Type", "application/json; charset=utf-8")
             self.send_header("Content-Length", str(len(payload)))
@@ -69,6 +99,7 @@ class Handler(SimpleHTTPRequestHandler):
             if not isinstance(body, dict):
                 raise ValueError("El perfil debe ser un objeto JSON.")
             response, status = analyze(body), 200
+            response["client"] = save_profile(body.get("client_id", ""), body.get("client_name", ""), response["perfil"])
         except (ValueError, ValidationError, json.JSONDecodeError) as error:
             response, status = {"error": "Revisa los valores del perfil.", "detail": str(error)}, 400
         payload = json.dumps(response, ensure_ascii=False).encode()

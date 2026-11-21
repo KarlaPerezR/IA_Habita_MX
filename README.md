@@ -18,6 +18,8 @@ En el primer acceso, el formulario de perfil ocupa la pantalla completa y el tab
 
 El mapa usa Leaflet con cartografía de OpenStreetMap, zoom y marcadores seleccionables. Las coordenadas son aproximadas porque el catálogo académico contiene zonas ficticias; la atribución de OpenStreetMap permanece visible.
 
+Los perfiles de cliente se guardan por `ID de cliente` y nombre en `.runtime/client_profiles.json`. El mismo ID actualiza el registro existente; **Nuevo perfil** abre una configuración limpia y el selector permite recuperar perfiles previamente guardados.
+
 Esta guía explica cómo trabajar desde **Visual Studio Code en Windows**, con Anaconda para administrar Python y PowerShell como terminal integrada. El catálogo contiene seis zonas ficticias y condiciones financieras simuladas.
 
 ## 1. Preparar Visual Studio Code
