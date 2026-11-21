@@ -90,6 +90,7 @@ class Zona(Contrato):
     longitud: float = -99.1332
     superficie_m2: float = 0
     tipo: str = "vivienda"
+    motor_traslado: str = "estimacion_geodesica"
 
 
 class Conclusion(Contrato):

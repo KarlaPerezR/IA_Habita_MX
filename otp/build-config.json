@@ -1,0 +1,6 @@
+{
+  "configVersion": "habimas-cdmx-1.0",
+  "dataImportReport": true,
+  "transitServiceStart": "-P30D",
+  "transitServiceEnd": "P365D"
+}

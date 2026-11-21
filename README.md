@@ -32,7 +32,11 @@ Para una base local, inicia `docker-compose.data.yml`, instala `requirements-dat
 
 En macOS también puede utilizarse PostgreSQL 18 + PostGIS mediante Homebrew. El servidor lee `.env.data` sólo de manera local: consulta primero PostGIS y utiliza el CSV como respaldo si la base no está disponible. Las muestras oficiales se descargan con `python3 pipeline/ingest_official_sources.py`; se almacenan en `datos/raw/`, excluido de Git, junto con fecha, tamaño y SHA-256.
 
-Los indicadores territoriales de las 20 viviendas siguen marcados como provisionales y simulados. El traslado actual es una estimación geodésica dependiente de destino y modo; será sustituido por rutas de OpenTripPlanner cuando se incorpore GTFS CDMX.
+Los indicadores territoriales de las 20 viviendas siguen marcados como provisionales y simulados. El traslado utiliza OpenTripPlanner cuando existe una ruta válida y conserva una estimación geodésica claramente etiquetada como respaldo.
+
+### Movilidad con OpenTripPlanner
+
+Ejecuta `python3 pipeline/prepare_otp.py`, `pipeline/build_otp.sh` y `pipeline/start_otp.sh`. HABIMAS consulta OpenTripPlanner 2.10 para rutas sobre la red OSM y muestra si el tiempo proviene de OTP o de la estimación provisional. El GTFS oficial descargado en noviembre de 2026 contiene 1,204 viajes cuyo calendario ya venció; por integridad metodológica no se alteran esas fechas. Hasta que SEMOVI publique un calendario vigente, el transporte público conserva la estimación y caminar, bicicleta y automóvil utilizan las rutas OSM que OTP puede resolver.
 
 Esta guía explica cómo trabajar desde **Visual Studio Code en Windows**, con Anaconda para administrar Python y PowerShell como terminal integrada. El catálogo contiene seis zonas ficticias y condiciones financieras simuladas.
 

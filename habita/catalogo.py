@@ -6,6 +6,7 @@ import math
 import os
 from pathlib import Path
 from .modelos import Perfil, Zona
+from .movilidad import minutos_otp
 
 ROOT = Path(__file__).resolve().parents[1]
 CATALOGO = ROOT / "datos" / "viviendas_simuladas_cdmx.csv"
@@ -32,6 +33,14 @@ def traslado_estimado(perfil: Perfil, lat: float, lon: float) -> float:
     velocidad = {"caminando": 4.5, "bicicleta": 14, "automovil": 18, "transporte_publico": 13}[perfil.modo_traslado]
     espera = 8 if perfil.modo_traslado == "transporte_publico" else 3 if perfil.modo_traslado == "automovil" else 0
     return round(km / velocidad * 60 + espera, 1)
+
+def calcular_traslado(perfil: Perfil, lat: float, lon: float) -> tuple[float, str]:
+    routed = minutos_otp(lat, lon, perfil.destino_latitud, perfil.destino_longitud,
+                         perfil.hora_salida, perfil.modo_traslado)
+    if routed is not None:
+        source = "GTFS CDMX / OSM" if perfil.modo_traslado == "transporte_publico" else "OSM"
+        return routed, f"OpenTripPlanner 2.10 / {source}"
+    return traslado_estimado(perfil, lat, lon), "estimacion_geodesica"
 
 
 def _filas_postgis() -> list[dict[str, object]]:
@@ -60,7 +69,7 @@ def cargar_viviendas(perfil: Perfil, ruta: Path = CATALOGO) -> list[Zona]:
     for row in rows:
         lat, lon = float(row["latitud"]), float(row["longitud"])
         seguridad, riesgos, vivienda, movilidad_base, entorno = BASE_ALCALDIA[row["alcaldia"]]
-        traslado = traslado_estimado(perfil, lat, lon)
+        traslado, motor_traslado = calcular_traslado(perfil, lat, lon)
         movilidad = round(max(0, min(100, 100 - max(0, traslado - 20) * 100 / 70)) * .7 + movilidad_base * .3, 1)
         result.append(Zona(
             id=row["id"], nombre=row["nombre"], precio=float(row["precio"]),
@@ -70,5 +79,6 @@ def cargar_viviendas(perfil: Perfil, ruta: Path = CATALOGO) -> list[Zona]:
             fecha=row["fecha"], nivel_geografico="vivienda simulada / alcaldía", simulado=bool(row["simulada"]),
             colonia=row["colonia"], alcaldia=row["alcaldia"], latitud=lat, longitud=lon,
             superficie_m2=float(row["superficie_m2"]), tipo=row["tipo"],
+            motor_traslado=motor_traslado,
         ))
     return result
