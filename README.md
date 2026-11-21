@@ -10,7 +10,7 @@ La rama `interfaz` incorpora un tablero responsivo conectado a los resultados re
 python server.py
 ```
 
-Abre `http://127.0.0.1:8000`. La API local `GET /api/dashboard` integra `calculos.json` y `resultado.json`; los escenarios Base, Estrés y 15 años, el mapa, el ranking, los descartes y el detalle se actualizan con esos datos.
+Abre `http://127.0.0.1:8000`. La API local `GET /api/dashboard` integra `calculos.json` y `resultado.json`; los escenarios Base, Estrés y 15 años, el mapa, el ranking, los descartes y el detalle se actualizan con esos datos. El formulario **Ajustar perfil** usa `POST /api/analyze` para validar el perfil y ejecutar de nuevo el motor determinista en memoria, sin modificar la evidencia original.
 
 Esta guía explica cómo trabajar desde **Visual Studio Code en Windows**, con Anaconda para administrar Python y PowerShell como terminal integrada. El catálogo contiene seis zonas ficticias y condiciones financieras simuladas.
 

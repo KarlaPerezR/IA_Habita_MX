@@ -1,8 +1,9 @@
 """Contratos de entrada. Los montos son MXN y las tasas son fracciones."""
+from __future__ import annotations
 from datetime import date
 import json
 from math import isclose
-from typing import Annotated
+from typing import Annotated, Optional
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 Monto = Annotated[float, Field(ge=0, allow_inf_nan=False)]
@@ -69,11 +70,11 @@ class Zona(Contrato):
     precio: Annotated[float, Field(gt=0)]
     habitaciones: int = Field(ge=1)
     traslado_min: Monto
-    seguridad: Puntaje | None
-    riesgos: Puntaje | None
-    vivienda: Puntaje | None
-    movilidad: Puntaje | None
-    entorno: Puntaje | None
+    seguridad: Optional[Puntaje]
+    riesgos: Optional[Puntaje]
+    vivienda: Optional[Puntaje]
+    movilidad: Optional[Puntaje]
+    entorno: Optional[Puntaje]
     fuente: str = Field(min_length=1)
     fecha: date
     nivel_geografico: str = Field(min_length=1)
@@ -85,7 +86,7 @@ class Conclusion(Contrato):
     resumen: str = Field(min_length=20, max_length=1800)
     ids_revisados: list[str]
     ranking_ids: list[str] = Field(default_factory=list)
-    recomendacion_id: str | None = None
+    recomendacion_id: Optional[str] = None
 
 
 def validar_conclusion(texto: str, etapa: str, datos: dict, ids: list[str]) -> Conclusion:

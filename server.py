@@ -2,6 +2,9 @@
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 import json
+from pydantic import ValidationError
+from habita.modelos import Perfil
+from habita.motor import calcular_todo, cargar_zonas
 
 ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
@@ -16,6 +19,14 @@ def dashboard():
         "zonas": calculations["zonas"]["zonas"],
         "finanzas": calculations["finanzas"],
     }
+
+def analyze(profile_updates):
+    current = dashboard()["perfil"]
+    allowed = {"ingreso_mensual", "gastos_mensuales", "deudas_mensuales", "reserva_mensual", "presupuesto_maximo", "enganche_disponible", "ahorro_gastos_iniciales", "pago_maximo_usuario", "habitaciones_minimas", "traslado_maximo_min", "seguridad_minima", "riesgos_minimo", "plazo_anios", "tasa_anual"}
+    current.update({key: value for key, value in profile_updates.items() if key in allowed})
+    profile = Perfil.model_validate(current)
+    calculations = calcular_todo(profile, cargar_zonas(OUTPUT / "entrada_zonas.csv"))
+    return {**calculations["coordinacion"], "perfil": calculations["perfil"]["entrada"], "zonas": calculations["zonas"]["zonas"], "finanzas": calculations["finanzas"]}
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -32,6 +43,28 @@ class Handler(SimpleHTTPRequestHandler):
             self.wfile.write(payload)
             return
         super().do_GET()
+
+    def do_POST(self):
+        if self.path != "/api/analyze":
+            self.send_error(404)
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            if length <= 0 or length > 100_000:
+                raise ValueError("La solicitud está vacía o excede el tamaño permitido.")
+            body = json.loads(self.rfile.read(length))
+            if not isinstance(body, dict):
+                raise ValueError("El perfil debe ser un objeto JSON.")
+            response, status = analyze(body), 200
+        except (ValueError, ValidationError, json.JSONDecodeError) as error:
+            response, status = {"error": "Revisa los valores del perfil.", "detail": str(error)}, 400
+        payload = json.dumps(response, ensure_ascii=False).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json; charset=utf-8")
+        self.send_header("Content-Length", str(len(payload)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(payload)
 
 if __name__ == "__main__":
     print("Habita MX disponible en http://127.0.0.1:8000")
