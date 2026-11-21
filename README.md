@@ -30,6 +30,10 @@ python pipeline/load_simulated_homes.py --validate-only
 
 Para una base local, inicia `docker-compose.data.yml`, instala `requirements-data.txt`, copia las variables de `.env.data.example` a tu gestor local de secretos y ejecuta el cargador con `DATABASE_URL` definido. El cargador crea el esquema PostGIS y hace una carga idempotente. La definición completa de indicadores está en `docs/metodologia_mvp_cdmx.md`.
 
+En macOS también puede utilizarse PostgreSQL 18 + PostGIS mediante Homebrew. El servidor lee `.env.data` sólo de manera local: consulta primero PostGIS y utiliza el CSV como respaldo si la base no está disponible. Las muestras oficiales se descargan con `python3 pipeline/ingest_official_sources.py`; se almacenan en `datos/raw/`, excluido de Git, junto con fecha, tamaño y SHA-256.
+
+Los indicadores territoriales de las 20 viviendas siguen marcados como provisionales y simulados. El traslado actual es una estimación geodésica dependiente de destino y modo; será sustituido por rutas de OpenTripPlanner cuando se incorpore GTFS CDMX.
+
 Esta guía explica cómo trabajar desde **Visual Studio Code en Windows**, con Anaconda para administrar Python y PowerShell como terminal integrada. El catálogo contiene seis zonas ficticias y condiciones financieras simuladas.
 
 ## 1. Preparar Visual Studio Code

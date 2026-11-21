@@ -70,7 +70,7 @@ class Perfil(Contrato):
 
 
 class Zona(Contrato):
-    id: str = Field(pattern=r"^Z[0-9]{2,4}$")
+    id: str = Field(pattern=r"^[ZV][0-9]{2,4}$")
     nombre: str = Field(min_length=1)
     precio: Annotated[float, Field(gt=0)]
     habitaciones: int = Field(ge=1)
@@ -84,6 +84,12 @@ class Zona(Contrato):
     fecha: date
     nivel_geografico: str = Field(min_length=1)
     simulado: bool
+    colonia: str = ""
+    alcaldia: str = ""
+    latitud: float = 19.4326
+    longitud: float = -99.1332
+    superficie_m2: float = 0
+    tipo: str = "vivienda"
 
 
 class Conclusion(Contrato):

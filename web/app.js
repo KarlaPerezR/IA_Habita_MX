@@ -1,11 +1,11 @@
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-let data, initialProfile, selected='Z02', scenario='base', filter='viable', configuringFirstTime=false, currentClient=null, savedProfiles=[];
+let data, initialProfile, selected=null, scenario='base', filter='viable', configuringFirstTime=false, currentClient=null, savedProfiles=[];
 let habitaMap, mapMarkers={};
 const money=n=>new Intl.NumberFormat('es-MX',{style:'currency',currency:'MXN',maximumFractionDigits:n%1?2:0}).format(n);
-const names={Z01:'Parque Norte',Z02:'Distrito Central',Z03:'Distrito Premium',Z04:'Colonia Compacta',Z05:'Corredor Periférico',Z06:'Zona en evaluación'};
-const places={Z01:'Gustavo A. Madero, CDMX',Z02:'Cuauhtémoc, CDMX',Z03:'Miguel Hidalgo, CDMX',Z04:'Benito Juárez, CDMX',Z05:'Iztapalapa, CDMX',Z06:'Álvaro Obregón, CDMX'};
-const rooms={Z01:2,Z02:3,Z03:3,Z04:1,Z05:2,Z06:2}, travel={Z01:35,Z02:25,Z03:20,Z04:20,Z05:70,Z06:30};
-const coordinates={Z01:[19.4840,-99.1100],Z02:[19.4326,-99.1332],Z03:[19.4270,-99.1900],Z04:[19.3800,-99.1600],Z05:[19.3500,-99.0500],Z06:[19.3600,-99.2200]};
+const names=new Proxy({},{get:(_,id)=>zone(id)?.nombre||id});
+const places=new Proxy({},{get:(_,id)=>{const z=zone(id);return z?`${z.colonia}, ${z.alcaldia}, CDMX`:''}});
+const rooms=new Proxy({},{get:(_,id)=>zone(id)?.habitaciones||0}), travel=new Proxy({},{get:(_,id)=>zone(id)?.traslado_min||0});
+const coordinates=new Proxy({},{get:(_,id)=>{const z=zone(id);return z?[z.latitud,z.longitud]:[19.4326,-99.1332]}});
 const finance=id=>data.finanzas.alternativas.find(x=>x.id===id), zone=id=>data.zonas.find(x=>x.id===id);
 const payment=f=>scenario==='stress'?f.pago_estres:scenario==='short'?f.pago_plazo_corto:f.pago_total;
 
@@ -37,6 +37,7 @@ function refreshMapMarkers(){
 }
 function applyFilter(){refreshMapMarkers()}
 function render(){
+  if(!selected||!zone(selected))selected=data.recomendacion_id||data.zonas[0]?.id;
   const count=data.ranking.length,total=data.zonas.length;$('#viableStat').textContent=count;$('#totalStat').textContent=total;$('#viableFilter').textContent=count;$('#allFilter').textContent=total;$('#limit').textContent=money(data.limite_pago);$('#budget').textContent=money(data.perfil.presupuesto_maximo);
   $('.hero h2').innerHTML=count?`${count} ${count===1?'alternativa se ajusta':'alternativas se ajustan'} a tu perfil`:'Ninguna alternativa cumple todos tus límites';
   $('#ranking').innerHTML=count?data.ranking.map(card).join(''):'<div class="empty-state"><h3>Sin alternativas viables</h3><p>Prueba aumentando el presupuesto o el pago máximo, o ajustando tus requisitos de traslado, habitaciones y seguridad.</p><button class="secondary" id="emptyAdjust">Ajustar perfil</button></div>';

@@ -66,10 +66,16 @@ def load(rows: list[dict[str, object]], database_url: str, schema_path: Path) ->
 
 
 def main() -> None:
+    env_path = ROOT / ".env.data"
+    if env_path.exists():
+        for line in env_path.read_text(encoding="utf-8").splitlines():
+            if line and not line.lstrip().startswith("#") and "=" in line:
+                key, value = line.split("=", 1)
+                os.environ.setdefault(key.strip(), value.strip())
     parser = argparse.ArgumentParser()
     parser.add_argument("--csv", type=Path, default=DEFAULT_CSV)
     parser.add_argument("--schema", type=Path, default=DEFAULT_SCHEMA)
-    parser.add_argument("--database-url", default=os.getenv("DATABASE_URL"))
+    parser.add_argument("--database-url", default=os.environ.get("DATABASE_URL"))
     parser.add_argument("--validate-only", action="store_true")
     arguments = parser.parse_args()
     rows = read_and_validate(arguments.csv)

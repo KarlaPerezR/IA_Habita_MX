@@ -5,17 +5,29 @@ import json
 import re
 import threading
 import time
+import os
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 from pydantic import ValidationError
 from habita.modelos import Perfil
 from habita.motor import analizar_perfil, cargar_zonas, evaluar_zonas, evaluar_finanzas, integrar
+from habita.catalogo import cargar_viviendas
 
 ROOT = Path(__file__).resolve().parent
 WEB = ROOT / "web"
 OUTPUT = ROOT / "salidas"
 PROFILE_STORE = ROOT / ".runtime" / "client_profiles.json"
 PROFILE_LOCK = threading.Lock()
+
+def load_local_env():
+    path = ROOT / ".env.data"
+    if path.exists():
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line and not line.lstrip().startswith("#") and "=" in line:
+                key, value = line.split("=", 1)
+                os.environ.setdefault(key.strip(), value.strip())
+
+load_local_env()
 
 def profiles():
     if not PROFILE_STORE.exists():
@@ -41,21 +53,20 @@ def save_profile(client_id, name, profile):
 
 def dashboard():
     calculations = json.loads((OUTPUT / "calculos.json").read_text(encoding="utf-8"))
-    result = json.loads((OUTPUT / "resultado.json").read_text(encoding="utf-8"))["resultado"]
-    normalized_profile = Perfil.model_validate(calculations["perfil"]["entrada"]).model_dump(mode="json")
-    return {
-        **result,
-        "perfil": normalized_profile,
-        "zonas": calculations["zonas"]["zonas"],
-        "finanzas": calculations["finanzas"],
-    }
+    profile = Perfil.model_validate(calculations["perfil"]["entrada"])
+    zones = cargar_viviendas(profile)
+    profile_data = analizar_perfil(profile)
+    zone_data = evaluar_zonas(profile, zones)
+    finance_data = evaluar_finanzas(profile, zones, profile_data)
+    return {**integrar(profile, zone_data, finance_data), "perfil": profile_data["entrada"],
+            "zonas": zone_data["zonas"], "finanzas": finance_data}
 
 def analyze(profile_updates):
     current = dashboard()["perfil"]
     allowed = {"ingreso_mensual", "gastos_mensuales", "deudas_mensuales", "reserva_mensual", "presupuesto_maximo", "enganche_disponible", "ahorro_gastos_iniciales", "pago_maximo_usuario", "habitaciones_minimas", "traslado_maximo_min", "destino_nombre", "destino_latitud", "destino_longitud", "modo_traslado", "hora_salida", "seguridad_minima", "riesgos_minimo", "plazo_anios", "tasa_anual"}
     current.update({key: value for key, value in profile_updates.items() if key in allowed})
     profile = Perfil.model_validate(current)
-    zones = cargar_zonas(OUTPUT / "entrada_zonas.csv")
+    zones = cargar_viviendas(profile)
     pipeline = []
 
     def run(stage, label, operation):

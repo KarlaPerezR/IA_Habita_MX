@@ -1,3 +1,4 @@
 .runtime/client_profiles.json
 .runtime/client_profiles.tmp
 .env.data
+datos/raw/
