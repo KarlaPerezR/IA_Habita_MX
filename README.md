@@ -16,6 +16,8 @@ Durante el recálculo se muestra el estado de las cuatro etapas reales: perfil, 
 
 En el primer acceso, el formulario de perfil ocupa la pantalla completa y el tablero permanece oculto hasta completar el análisis. El navegador conserva únicamente la marca local `habimas-configured`; los parámetros siguen validándose y calculándose en el servidor.
 
+El mapa usa Leaflet con cartografía de OpenStreetMap, zoom y marcadores seleccionables. Las coordenadas son aproximadas porque el catálogo académico contiene zonas ficticias; la atribución de OpenStreetMap permanece visible.
+
 Esta guía explica cómo trabajar desde **Visual Studio Code en Windows**, con Anaconda para administrar Python y PowerShell como terminal integrada. El catálogo contiene seis zonas ficticias y condiciones financieras simuladas.
 
 ## 1. Preparar Visual Studio Code

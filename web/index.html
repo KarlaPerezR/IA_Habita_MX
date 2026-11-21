@@ -8,6 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -53,12 +54,7 @@
         <div class="section-heading"><h2>Inmuebles en Ciudad de México</h2><div class="filter-tabs"><button class="active" data-filter="viable">Viables (<span id="viableFilter">2</span>)</button><button data-filter="all">Todos (<span id="allFilter">6</span>)</button></div></div>
         <div class="property-layout">
           <div class="map-card">
-            <div class="map" aria-label="Mapa ilustrativo de Ciudad de México">
-              <div class="roads"></div><div class="park"></div>
-              <button class="pin pin-one" data-zone="Z01"><span>$1,500,000</span>⌂</button>
-              <button class="pin pin-two active" data-zone="Z02"><span>$1,750,000</span>⌂</button>
-              <div class="zoom">+<hr>−</div><small>Ubicaciones aproximadas · Datos simulados</small>
-            </div>
+            <div class="map" id="realMap" role="application" aria-label="Mapa interactivo de inmuebles en Ciudad de México"><div class="map-loading">Cargando mapa interactivo…</div></div>
             <div class="property-summary" id="propertySummary"></div>
           </div>
         </div>
@@ -117,6 +113,7 @@
     <button class="primary results-button" id="viewResults" hidden>Ver resultados</button>
   </dialog>
   <div class="toast" id="toast" role="status"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
   <script src="/app.js" defer></script>
 </body>
 </html>
