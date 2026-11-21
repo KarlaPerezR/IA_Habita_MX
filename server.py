@@ -6,6 +6,7 @@ import re
 import threading
 import time
 import os
+import uuid
 from datetime import datetime, timezone
 from urllib.parse import urlparse
 from pydantic import ValidationError
@@ -18,6 +19,7 @@ WEB = ROOT / "web"
 OUTPUT = ROOT / "salidas"
 PROFILE_STORE = ROOT / ".runtime" / "client_profiles.json"
 PROFILE_LOCK = threading.Lock()
+AGENT_LOCK = threading.Lock()
 
 def load_local_env():
     path = ROOT / ".env.data"
@@ -67,19 +69,37 @@ def analyze(profile_updates):
     current.update({key: value for key, value in profile_updates.items() if key in allowed})
     profile = Perfil.model_validate(current)
     zones = cargar_viviendas(profile)
-    pipeline = []
-
-    def run(stage, label, operation):
-        started = time.perf_counter()
-        result = operation()
-        pipeline.append({"stage": stage, "label": label, "status": "completed", "duration_ms": round((time.perf_counter() - started) * 1000, 2)})
-        return result
-
-    profile_data = run("perfil", "Perfil y capacidad", lambda: analizar_perfil(profile))
-    zone_data = run("zonas", "Indicadores de zona", lambda: evaluar_zonas(profile, zones))
-    finance_data = run("finanzas", "Escenarios financieros", lambda: evaluar_finanzas(profile, zones, profile_data))
-    coordination = run("coordinacion", "Integración y ranking", lambda: integrar(profile, zone_data, finance_data))
-    return {**coordination, "perfil": profile_data["entrada"], "zonas": zone_data["zonas"], "finanzas": finance_data, "pipeline": pipeline, "execution_mode": "deterministic"}
+    from habita.aplicacion import configuracion, diagnosticar
+    from habita.equipo import Bitacora, LLM, construir_crew
+    import litellm
+    metadata = diagnosticar()
+    base, model = configuracion()
+    litellm.register_model(model_cost={f"ollama_chat/{model}": {
+        "supports_function_calling": True, "max_input_tokens": int(os.getenv("OLLAMA_NUM_CTX", "8192")),
+        "max_output_tokens": 900, "litellm_provider": "ollama_chat", "mode": "chat"}})
+    llm = LLM(model=f"ollama_chat/{model}", is_litellm=True, base_url=base, api_key="ollama",
+              temperature=0, timeout=int(os.getenv("OLLAMA_TIMEOUT", "240")),
+              num_ctx=int(os.getenv("OLLAMA_NUM_CTX", "8192")),
+              context_window_size=int(os.getenv("OLLAMA_NUM_CTX", "8192")), max_tokens=900)
+    run_dir = ROOT / ".runtime" / "web_agent_runs" / f"{datetime.now().strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
+    log = Bitacora(run_dir)
+    started = time.perf_counter()
+    with AGENT_LOCK:
+        crew, state = construir_crew(profile, zones, llm, log)
+        crew.kickoff()
+    duration = round((time.perf_counter() - started) * 1000, 2)
+    conclusions = {}
+    for stage in ("perfil", "zonas", "finanzas", "coordinacion"):
+        evidence = json.loads((run_dir / f"{stage}.json").read_text(encoding="utf-8"))
+        conclusions[stage] = evidence["conclusion"]["resumen"]
+    pipeline = [{"stage": stage, "label": label, "status": "completed", "agent": True}
+                for stage, label in (("perfil", "Agente de perfil"), ("zonas", "Agente territorial"),
+                                     ("finanzas", "Agente financiero"), ("coordinacion", "Agente coordinador"))]
+    profile_data, zone_data, finance_data, coordination = (state[key] for key in ("perfil", "zonas", "finanzas", "coordinacion"))
+    return {**coordination, "perfil": profile_data["entrada"], "zonas": zone_data["zonas"],
+            "finanzas": finance_data, "pipeline": pipeline, "execution_mode": "crewai_ollama",
+            "agent_conclusions": conclusions, "agent_run_id": run_dir.name,
+            "model": metadata["modelo"], "duration_ms": duration}
 
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -114,6 +134,8 @@ class Handler(SimpleHTTPRequestHandler):
             response["client"] = save_profile(body.get("client_id", ""), body.get("client_name", ""), response["perfil"])
         except (ValueError, ValidationError, json.JSONDecodeError) as error:
             response, status = {"error": "Revisa los valores del perfil.", "detail": str(error)}, 400
+        except Exception as error:
+            response, status = {"error": "La ejecución de agentes no pudo completarse.", "detail": str(error)}, 500
         payload = json.dumps(response, ensure_ascii=False).encode()
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")

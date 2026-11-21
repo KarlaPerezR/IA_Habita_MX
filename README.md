@@ -10,9 +10,9 @@ La rama `interfaz` incorpora un tablero responsivo conectado a los resultados re
 python server.py
 ```
 
-Abre `http://127.0.0.1:8000`. La API local `GET /api/dashboard` integra `calculos.json` y `resultado.json`; los escenarios Base, Estrés y 15 años, el mapa, el ranking, los descartes y el detalle se actualizan con esos datos. El formulario **Ajustar perfil** usa `POST /api/analyze` para validar el perfil y ejecutar de nuevo el motor determinista en memoria, sin modificar la evidencia original.
+Abre `http://127.0.0.1:8000`. La API local `GET /api/dashboard` prepara el estado inicial. El formulario **Ajustar perfil** usa `POST /api/analyze` para ejecutar cuatro agentes CrewAI con Ollama local sobre las 20 viviendas; los cálculos numéricos permanecen en herramientas deterministas y los agentes interpretan evidencia validada.
 
-Durante el recálculo se muestra el estado de las cuatro etapas reales: perfil, zonas, finanzas y coordinación. La interfaz identifica este recorrido como **motor determinista local**; el flujo CrewAI/Ollama de `habita/equipo.py` no se ejecuta desde la web todavía.
+Durante el recálculo se ejecutan secuencialmente los agentes de perfil, zona, finanzas y coordinación definidos en `habita/equipo.py`. Cada salida pasa por un guardrail antes de incorporarse al resultado.
 
 En el primer acceso, el formulario de perfil ocupa la pantalla completa y el tablero permanece oculto hasta completar el análisis. El navegador conserva únicamente la marca local `habimas-configured`; los parámetros siguen validándose y calculándose en el servidor.
 
@@ -29,6 +29,8 @@ python pipeline/load_simulated_homes.py --validate-only
 ```
 
 Para una base local, inicia `docker-compose.data.yml`, instala `requirements-data.txt`, copia las variables de `.env.data.example` a tu gestor local de secretos y ejecuta el cargador con `DATABASE_URL` definido. El cargador crea el esquema PostGIS y hace una carga idempotente. La definición completa de indicadores está en `docs/metodologia_mvp_cdmx.md`.
+
+La aplicación web debe iniciarse con `.venv/bin/python server.py` para disponer de CrewAI y LiteLLM. El pago máximo se valida tanto en navegador como en servidor y nunca puede superar `ingreso - gastos - deudas - reserva`.
 
 En macOS también puede utilizarse PostgreSQL 18 + PostGIS mediante Homebrew. El servidor lee `.env.data` sólo de manera local: consulta primero PostGIS y utiliza el CSV como respaldo si la base no está disponible. Las muestras oficiales se descargan con `python3 pipeline/ingest_official_sources.py`; se almacenan en `datos/raw/`, excluido de Git, junto con fecha, tamaño y SHA-256.
 

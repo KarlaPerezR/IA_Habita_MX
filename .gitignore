@@ -3,3 +3,8 @@
 .env.data
 datos/raw/
 .runtime/otp/
+.venv/
+.runtime/web_agent_runs/
+.runtime/*.db
+__pycache__/
+*.py[cod]

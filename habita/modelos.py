@@ -66,6 +66,9 @@ class Perfil(Contrato):
     def tasa_estres_valida(self):
         if self.tasa_anual + self.incremento_estres > 1:
             raise ValueError("La tasa anual de estrés debe ser menor o igual a 100 %.")
+        disponible = self.ingreso_mensual - self.gastos_mensuales - self.deudas_mensuales - self.reserva_mensual
+        if self.pago_maximo_usuario > max(0, disponible):
+            raise ValueError("El pago máximo no puede superar ingreso - gastos - deudas - reserva.")
         return self
 
 
