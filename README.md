@@ -1,251 +1,244 @@
-# Habita MX · Fase 3
+# Habita MX · Sistema multiagente de apoyo a decisiones de vivienda
+ 
+**Entrega final · Inteligencia Artificial · NRC 30033 · Universidad Anáhuac Puebla · Equipo 6 · 2026**
 
-Sistema multiagente académico para evaluar alternativas de vivienda y escenarios de financiamiento. Utiliza **Python 3.11, CrewAI y Ollama local** con cuatro agentes: Perfil del Usuario, Evaluación de Zona, Financiero y Coordinador. Built with Llama.
-
-Esta guía explica cómo trabajar desde **Visual Studio Code en Windows**, con Anaconda para administrar Python y PowerShell como terminal integrada. El catálogo contiene seis zonas ficticias y condiciones financieras simuladas.
-
-## 1. Preparar Visual Studio Code
-
-Necesitas estos componentes:
-
-| Componente | Uso |
+Habita MX ayuda a una persona a decidir **qué vivienda puede comprar en la Zona Metropolitana del Valle de México y bajo qué escenario de financiamiento**, sin rebasar su capacidad de pago ni sus requisitos de seguridad, traslado y espacio. Cuatro agentes especializados en **CrewAI** con un LLM local (**Ollama · llama3.2**) analizan el perfil, evalúan zonas, simulan el crédito e integran un ranking explicable. Las cifras oficiales salen de un motor determinista en Python y el LLM solo las interpreta. La persona usuaria audita y decide en una interfaz web.
+ 
+> Prototipo académico: el catálogo de 20 viviendas y las condiciones financieras son **simulados**. No constituye una oferta ni aprobación de crédito.
+ 
+| Integrante | Matrícula |
 |---|---|
-| [Visual Studio Code](https://code.visualstudio.com/) | Editar y ejecutar el proyecto. |
-| Anaconda o Miniconda | Administrar el ambiente de Python 3.11. |
-| [Ollama](https://ollama.com/download) | Ejecutar el modelo de lenguaje local. |
-| Extensión **Python**, de Microsoft (`ms-python.python`) | Seleccionar el intérprete y ejecutar scripts. |
-| Extensión **Jupyter**, de Microsoft (`ms-toolsai.jupyter`) | Ejecutar el cuaderno dentro de VS Code. |
-
-Abre el panel de extensiones con **Ctrl + Shift + X** e instala Python y Jupyter si todavía no aparecen instaladas.
-
-En **Archivo → Abrir carpeta**, selecciona la carpeta que contiene `main.py`, `environment.yml` y `Habita_MX.ipynb`. Si descargaste el ZIP, extráelo primero y abre la carpeta `habita-mx` que está dentro.
-
-Abre **Terminal → Nueva terminal** y elige **PowerShell**. Los comandos de esta guía se ejecutan desde la carpeta del proyecto. Comprueba la ubicación:
-
-```powershell
-Get-Location
-Test-Path .\main.py
+| Berra Herrera, Oscar Santiago | 00561951 |
+| Gil Calvillo, Carlos Alberto | 00622866 |
+| López Flores, Carlos Alberto | 00569015 |
+| Olmedo Paredes, Citlalli Izel | 00465194 |
+| Pérez Rodríguez, Karla Angelica | 00608814 |
+ 
+## 1. Descripción y arquitectura
+ 
+### 1.1 ¿Por qué un sistema multiagente?
+ 
+La decisión mezcla tres saberes con reglas distintas: perfil y restricciones del usuario, contexto territorial y matemática financiera. Separarlos en agentes con **una sola herramienta cada uno** hace que cada conclusión se pueda auditar por etapa, que cada agente se pueda probar por separado y que un error no se propague en silencio, como pasaría en un script monolítico. El Coordinador integra la evidencia con una política pública: **primero las restricciones obligatorias, después la suma ponderada y al final el desempate**.
+ 
+### 1.2 Arquitectura por capas
+ 
+```mermaid
+flowchart TB
+    U([Persona usuaria]) --> GUI
+    subgraph Presentación
+        GUI["GUI web · http://127.0.0.1:8000<br/>Formulario · Mapa · Comparador · Cómo funciona"]
+    end
+    subgraph Servicio
+        API["API · TODO: FastAPI / servidor<br/>(endpoints, formato de respuesta)"]
+    end
+    subgraph Orquestación
+        CREW["CrewAI · Process.sequential"]
+        A1[Agente de Perfil] --> A2[Agente de Zona]
+        A1 --> A3[Agente Financiero]
+        A1 & A2 & A3 --> A4[Agente Coordinador]
+    end
+    subgraph Cálculo
+        MOTOR["habita/motor.py<br/>capacidad · amortización · vetos · ranking"]
+        VAL["habita/modelos.py<br/>validación Pydantic"]
+    end
+    subgraph Modelo
+        LLM["Ollama local · llama3.2:latest<br/>127.0.0.1:11434"]
+    end
+    subgraph Datos
+        IN["datos/ · perfil JSON + catálogo CSV"]
+        OUT["salidas/&lt;corrida&gt;/ · JSON, JSONL, reporte.md"]
+    end
+    GUI <--> API --> CREW
+    CREW --- A1
+    A1 & A2 & A3 & A4 -->|herramientas| MOTOR
+    MOTOR --> VAL
+    A1 & A2 & A3 & A4 -->|interpretación| LLM
+    IN --> MOTOR
+    CREW --> OUT
 ```
-
-El segundo comando debe devolver `True`. Si devuelve `False`, abre la carpeta correcta antes de continuar.
-
-## 2. Preparar el ambiente de Anaconda
-
-Comprueba los ambientes disponibles:
-
-```powershell
-conda env list
-```
-
-**Si aparece `habita-mx`, úsalo directamente.** Si no aparece, créalo una sola vez:
-
-```powershell
-conda env create -f environment.yml
-```
-
-Este archivo crea el ambiente `habita-mx` con Python 3.11 e instala las dependencias de `requirements.txt`. La instalación inicial requiere internet. [Documentación de Conda](https://docs.conda.io/projects/conda/en/stable/user-guide/tasks/manage-environments.html).
-
-Verifica el intérprete y la instalación de CrewAI:
-
-```powershell
-conda run -n habita-mx python -c "import sys; from importlib.metadata import version; print(sys.executable); print('CrewAI:', version('crewai'))"
-```
-
-Si aparece `PackageNotFoundError` para CrewAI, el ambiente existe pero le faltan dependencias. Complétalas y repite la comprobación:
-
-```powershell
-conda run --no-capture-output -n habita-mx python -m pip install -r requirements.txt
-```
-
-Conserva la ruta de `python.exe` que imprime la comprobación: la usarás en el siguiente paso. `requirements-lock.txt` registra las versiones exactas de la demostración original en Windows.
-
-### Si PowerShell no reconoce conda
-
-Para una instalación estándar de Anaconda del usuario actual, puedes invocarlo por su ruta:
-
-```powershell
-$habitaConda = Join-Path $env:USERPROFILE "anaconda3\Scripts\conda.exe"
-Test-Path $habitaConda
-& $habitaConda env list
-```
-
-Si la comprobación devuelve `True`, sustituye `conda` por `& $habitaConda` en los comandos de esta guía. Por ejemplo:
-
-```powershell
-& $habitaConda run --no-capture-output -n habita-mx python main.py --diagnostico
-```
-
-Si devuelve `False`, localiza tu instalación de Anaconda o Miniconda y asigna a `$habitaConda` la ruta de su archivo `Scripts\conda.exe`. La carpeta puede variar según la instalación.
-
-## 3. Seleccionar el intérprete en VS Code
-
-1. Abre `main.py` en el editor.
-2. Presiona **Ctrl + Shift + P**.
-3. Ejecuta **Python: Select Interpreter / Python: Seleccionar intérprete**.
-4. Selecciona el ambiente **habita-mx**, con Python 3.11.
-
-Si no aparece, utiliza **Enter interpreter path / Introducir ruta del intérprete** y pega la ruta de `python.exe` obtenida en el paso anterior. El intérprete seleccionado se utiliza para las funciones de Python del editor, la ejecución y la depuración. [Documentación de VS Code](https://code.visualstudio.com/docs/python/environments).
-
-Los comandos de esta guía usan `conda run -n habita-mx`, que elige explícitamente el ambiente aunque PowerShell no lo active automáticamente. Si prefieres activarlo, ejecuta `conda activate habita-mx` y después utiliza `python` directamente.
-
-## 4. Comprobar Ollama y el modelo
-
-Abre la aplicación **Ollama** y mantenla funcionando. En la terminal de VS Code consulta los modelos instalados:
-
-```powershell
-ollama list
-```
-
-Debe aparecer `llama3.2:latest`. Si falta, descárgalo:
-
-```powershell
-ollama pull llama3.2
-```
-
-Comprueba la conexión del proyecto:
-
-```powershell
-conda run --no-capture-output -n habita-mx python main.py --diagnostico
-```
-
-Una respuesta correcta muestra el modelo, su digest, las versiones de Python, CrewAI y Ollama, y la dirección local `http://127.0.0.1:11434`.
-
-Si Ollama no responde, ejecuta `ollama serve` en **otra terminal** y déjala abierta. Si el puerto ya está ocupado, puede que el servidor esté iniciado: vuelve a probar el diagnóstico.
-
-## 5. Ejecutar los cuatro agentes
-
-Desde la terminal integrada de VS Code:
-
-```powershell
-conda run --no-capture-output -n habita-mx python main.py --modo crew
-```
-
-El flujo es **Perfil → Zona → Financiero → Coordinador**. Verás mensajes de herramientas utilizadas y tareas completadas. La ejecución puede tardar desde decenas de segundos hasta varios minutos, según el equipo.
-
-Al terminar, la terminal muestra el resultado y la ruta donde se guardó la evidencia. Cada corrida crea una carpeta nueva dentro de `salidas/`.
-
-Para las siguientes sesiones, abre el proyecto en VS Code, inicia Ollama y ejecuta el comando anterior.
-
-### Consultar los resultados
-
-En el explorador de VS Code, abre la carpeta de la corrida dentro de `salidas/`:
-
-| Archivo | Contenido |
+ 
+**Comunicación:** TODO: indicar si la GUI llama a la API por REST (petición y respuesta) o recibe el avance por SSE o WebSockets. Hoy el modal muestra el estado de cada agente y lo confirma al terminar la corrida.
+ 
+### 1.3 Marco PEAS
+ 
+| | Especificación |
 |---|---|
-| `reporte.md` | Ranking explicado, alertas y alternativas descartadas. |
-| `resultado.json` | Resultado consolidado, duración y metadatos. |
-| `interacciones.jsonl` | Herramientas utilizadas, validaciones y conclusiones breves. |
-| `perfil.json`, `zonas.json`, `finanzas.json`, `coordinacion.json` | Salidas aceptadas de cada tarea. |
-| `calculos.json` | Evidencia numérica de todas las etapas. |
-| `entrada_perfil.json`, `entrada_zonas.csv` | Copias de las entradas utilizadas. |
-
-Para leer `reporte.md` con formato, ábrelo y presiona **Ctrl + Shift + V**. Si una corrida falla, consulta `error.json` en su carpeta; esa corrida no produce un resultado final exitoso.
-
-## 6. Ejecutar el cuaderno Jupyter en VS Code
-
-1. Abre `Habita_MX.ipynb` desde el explorador del editor.
-2. Pulsa **Select Kernel / Seleccionar kernel**, arriba a la derecha.
-3. Elige el ambiente **habita-mx**. Si hace falta, abre **Select Another Kernel / Seleccionar otro kernel → Python Environments / Ambientes de Python**.
-4. Ejecuta las celdas en orden con **Shift + Enter**, o utiliza **Run All / Ejecutar todo**.
-
-La primera celda imprime `sys.executable`: comprueba que corresponda al mismo `python.exe` seleccionado para el proyecto. El kernel del cuaderno y el intérprete del editor pueden seleccionarse por separado. [Documentación de Jupyter en VS Code](https://code.visualstudio.com/docs/datascience/jupyter-notebooks).
-
-El cuaderno permite revisar el diagnóstico, editar el perfil, ejecutar los agentes, leer sus conclusiones y comparar las cifras con el motor de cálculo. Guarda el perfil editado en `datos/perfil_notebook.json` y conserva el caso original. La llamada al Crew utiliza otro hilo para ser compatible con el ciclo de eventos de Jupyter.
-
-La ejecución se realiza dentro de VS Code; no necesitas iniciar un servidor de notebooks en el navegador.
-
-## 7. Cambiar el caso de prueba
-
-Desde el explorador de VS Code, duplica `datos/perfil_demo.json`, llama a la copia `mi_perfil.json` y edita sus valores. Ejecuta:
-
-```powershell
-conda run --no-capture-output -n habita-mx python main.py --perfil datos/mi_perfil.json --zonas datos/zonas_demo.csv
-```
-
-Reglas de entrada:
-
-- Los montos se expresan en pesos mexicanos. Ingresos, gastos, deudas y reserva son mensuales; evita incluir deudas o gasto adicional de vivienda dentro de otros gastos para no contarlos dos veces.
-- El enganche y el ahorro para gastos iniciales son bolsas separadas.
-- Tasas y pesos son fracciones: `0.105` equivale a 10.5 %. Los seis pesos deben sumar `1`.
-- La descripción libre aporta contexto. Las cifras estructuradas determinan cálculos y restricciones.
-- Los indicadores territoriales van de 0 a 100, con sentido favorable. En `riesgos`, 100 significa menor exposición. Un campo vacío representa un dato ausente.
-- El catálogo registra `simulado`, `fuente`, `fecha` y `nivel_geografico`. Este prototipo no incluye conectores a fuentes oficiales.
-
-### Cambiar el modelo o el tiempo de espera
-
-Si todavía no tienes un archivo `.env`, duplica `.env.example` y renombra la copia como `.env`. Su configuración inicial es:
-
+| **P · Desempeño** | 0 recomendaciones que violen restricciones obligatorias; 100 % de concordancia entre el ranking de los agentes y el motor de cálculo (`--modo calculo`); cifras trazables por etapa; tiempo de respuesta con modelo local; 25/25 pruebas aprobadas. |
+| **E · Entorno** | Perfil financiero del usuario (ingreso, gastos, deudas, enganche, pago máximo) y catálogo de 20 viviendas simuladas en CDMX con indicadores normalizados 0–100: seguridad, riesgos, vivienda, movilidad y entorno. |
+| **A · Actuadores** | Herramientas `consultar_perfil`, `evaluar_catalogo`, `calcular_financiamiento` e `integrar_evaluaciones`; ranking, alertas y descartes en la GUI; archivos de evidencia en `salidas/`. |
+| **S · Sensores** | Formulario de la GUI o `perfil.json`, catálogo CSV, salidas aceptadas de las tareas previas (`Task.context`) y resultado de los validadores. |
+ 
+**Propiedades del entorno:** parcialmente observable (datos simulados con cobertura incompleta), determinista en el cálculo y estocástico en la redacción del LLM, episódico (cada corrida es independiente), estático durante la corrida, discreto (catálogo finito) y multiagente cooperativo.
+ 
+### 1.4 Agentes
+ 
+| # | Agente | Goal | Herramienta | Contexto que recibe |
+|---|---|---|---|---|
+| 1 | Perfil del Usuario | Identificar restricciones obligatorias, preferencias y capacidad mensual sin inventar datos. | `consultar_perfil` | Datos del usuario |
+| 2 | Evaluación de Zona | Evaluar cinco dimensiones territoriales, cobertura y cumplimiento del perfil. | `evaluar_catalogo` | Perfil aceptado |
+| 3 | Financiero | Comprobar enganche, gastos iniciales, mensualidad y sensibilidad a tasa y plazo. | `calcular_financiamiento` | Perfil aceptado |
+| 4 | Coordinador | Integrar evidencia y explicar el ranking sin recomendar alternativas que incumplan restricciones. | `integrar_evaluaciones` | Perfil, Zona y Financiero |
+ 
+El *backstory* completo de cada agente está en `habita/equipo.py` (`ROLES`). Todos tienen `allow_delegation=False`, `max_iter=4` y `memory=False`. Colaboran solo mediante `Task.context` y evidencia compartida.
+ 
+### 1.5 Guardrails y seguridad
+ 
+- **Guardrail por tarea** (`guardrail_max_retries=2`): rechaza la respuesta si el agente no usó su herramienta, si omite IDs o si el ranking no coincide con el del motor.
+- **Orden forzado:** cada herramienta exige que las tareas previas estén aceptadas (`exigir(...)`).
+- **Cifras oficiales desde Python:** el número que se publica nunca es una copia redactada por el LLM.
+- **Vetos antes que puntajes:** presupuesto, habitaciones, traslado, cobertura, seguridad, riesgos, enganche y capacidad de pago. Una buena puntuación nunca compensa una restricción incumplida.
+- **Validación de entradas** con Pydantic: por ejemplo, el pago máximo no puede superar la capacidad calculada.
+- **Herramientas acotadas:** sin acceso a archivos arbitrarios, red ni ejecución de código. La telemetría de CrewAI está desactivada.
+- El escenario de **estrés** (+2 pp de tasa) se muestra como alerta, no como veto.
+### 1.6 Human-in-the-Loop
+ 
+La persona usuaria revisa el ranking, el mapa y el comparador. Puede auditar el razonamiento de cada agente en **Cómo funciona** y revisar las alertas (etiqueta **REVISAR**). TODO: describir la acción de aprobar o ajustar la recomendación final (botón, cambio de pesos, nuevo perfil).
+ 
+---
+ 
+## 2. Prerrequisitos de software
+ 
+| Componente | Versión |
+|---|---|
+| Python | 3.11 |
+| Conda (Anaconda o Miniconda) | Reciente |
+| Ollama | Reciente, con `llama3.2:latest` |
+| Git | Cualquiera |
+ 
+- Dependencias: `requirements.txt`; versiones exactas de la demo en `requirements-lock.txt`.
+- Ambiente: `environment.yml` (crea `habita-mx`).
+- Variables: plantilla `.env.example`
 ```dotenv
 OLLAMA_BASE_URL=http://127.0.0.1:11434
 OLLAMA_MODEL=llama3.2:latest
 OLLAMA_TIMEOUT=240
 OLLAMA_NUM_CTX=8192
 ```
-
-Para cambiar el modelo, usa el nombre exacto de `ollama list` y un modelo local que admita herramientas. La demostración se verificó con `llama3.2:latest`; un modelo diferente requiere comprobar de nuevo sus respuestas. Tras editar `.env`, inicia una corrida nueva; en Jupyter, reinicia el kernel antes de ejecutar las celdas.
-
-## 8. Pruebas y cálculo sin IA
-
-Ejecuta las pruebas desde la terminal integrada:
-
-```powershell
-conda run --no-capture-output -n habita-mx python -m pytest -q --basetemp tmp/pruebas
+ 
+---
+ 
+## 3. Instalación y despliegue
+ 
+Los comandos funcionan en PowerShell (Windows) y en la terminal de macOS o Linux.
+ 
+```bash
+# 1. Clonar
+git clone https://github.com/KarlaPerezR/IA_Habita_MX.git
+cd IA_Habita_MX
+ 
+# 2. Ambiente
+conda env create -f environment.yml      # solo la primera vez
+conda activate habita-mx
+ 
+# 3. Variables de entorno
+cp .env.example .env                     # PowerShell: Copy-Item .env.example .env
+ 
+# 4. Modelo local
+ollama pull llama3.2
+ollama serve                             # en otra terminal, si la app de Ollama no está abierta
+ 
+# 5. Diagnóstico: modelo, versiones y conexión con Ollama
+python main.py --diagnostico
+ 
+# 6. Levantar la interfaz
+TODO: comando exacto para iniciar la GUI y la API (p. ej. uvicorn ... --port 8000)
+# Abrir http://127.0.0.1:8000
 ```
-
-La verificación original aprobó **25 pruebas**, que cubren amortización, tasa cero, contado, datos inválidos, restricciones, ausencia de alternativas y validación del ranking.
-
-Para obtener únicamente la línea base de cálculo:
-
-```powershell
-conda run --no-capture-output -n habita-mx python main.py --modo calculo
+ 
+Si `conda` no se reconoce en PowerShell, invócalo por su ruta (`$env:USERPROFILE\anaconda3\Scripts\conda.exe`). Si falta CrewAI, ejecuta `python -m pip install -r requirements.txt` dentro del ambiente.
+ 
+---
+ 
+## 4. Instrucciones de reproducción
+ 
+Con el ambiente activo y Ollama en ejecución:
+ 
+```bash
+python -m pytest -q --basetemp tmp/pruebas                              # 25 passed
+python main.py --modo calculo                                          # línea base sin IA
+python main.py --modo crew                                             # 4 agentes con caso demo
+python main.py --perfil datos/TODO_perfil_viable.json --zonas datos/zonas_demo.csv
+python main.py --perfil datos/TODO_perfil_sin_opciones.json --zonas datos/zonas_demo.csv
 ```
-
-Este modo funciona sin Ollama y se identifica como `calculo`. El modo `crew` ejecuta los cuatro agentes. El cuaderno compara los resultados oficiales de ambos modos mediante una aserción.
-
-
-## Arquitectura y política de decisión
-
-| Agente | Herramienta | Contexto recibido |
-|---|---|---|
-| Perfil del Usuario | `consultar_perfil` | Datos del usuario. |
-| Evaluación de Zona | `evaluar_catalogo` | Perfil validado. |
-| Financiero | `calcular_financiamiento` | Perfil validado. |
-| Coordinador | `integrar_evaluaciones` | Perfil, Zona y Financiero. |
-
-`Process.sequential` ejecuta las tareas en orden. Todos los agentes tienen `allow_delegation=False`; colaboran mediante `Task.context` y evidencia compartida.
-
-Python calcula capacidad mensual, amortización y puntuaciones; los agentes utilizan las herramientas e interpretan los resultados. El control de salida exige usar la herramienta y comprueba identificadores y orden del ranking. Las cifras oficiales proceden de Python; las explicaciones del modelo requieren revisión humana.
-
-Primero se aplican las restricciones de presupuesto, habitaciones, traslado, cobertura, seguridad, riesgos, enganche y capacidad de pago. Después se ordenan las alternativas viables mediante seis dimensiones ponderadas. Los empates se resuelven por menor pago mensual y luego por ID.
-
-Los supuestos financieros son didácticos. El escenario de estrés compara una tasa dos puntos porcentuales mayor al contratar; no representa un cambio automático en una hipoteca fija vigente. El prototipo no calcula un CAT completo ni determina aprobación de crédito.
-
-## Estructura del proyecto
-
+ 
+### Casos sintéticos de la demostración en vivo
+ 
+| Caso | Archivo | Datos clave | Resultado esperado |
+|---|---|---|---|
+| A · Perfil viable | `datos/TODO.json` | Ingreso 90,000 · pago máx. 37,000 · presupuesto 5,000,000 · enganche 800,000 · 2 hab. · traslado ≤ 60 min | **4 de 20** viviendas viables; mejor afinidad: Departamento Vallejo (58.0) |
+| B · Restricciones estrictas | `datos/TODO.json` | TODO | **0 de 20** viables; los motivos de descarte aparecen en el reporte |
+| Validación | GUI | Pago máximo 37,500 | La GUI bloquea el envío: "El pago máximo no puede superar $37,000" |
+ 
+Durante la corrida, la terminal imprime `[herramienta]`, `[tarea_completada]` y `[validacion_rechazada]` por etapa. El registro completo queda en `interacciones.jsonl`.
+ 
+### Salidas de cada corrida (`salidas/<corrida>/`)
+ 
+| Archivo | Contenido |
+|---|---|
+| `reporte.md` | Ranking explicado, alertas y alternativas descartadas |
+| `resultado.json` | Resultado consolidado, duración y metadatos |
+| `interacciones.jsonl` | Herramientas usadas, validaciones y conclusiones por etapa |
+| `perfil.json`, `zonas.json`, `finanzas.json`, `coordinacion.json` | Salida aceptada de cada agente |
+| `calculos.json` | Evidencia numérica de todas las etapas |
+| `entrada_perfil.json`, `entrada_zonas.csv` | Copia de las entradas |
+| `error.json` | Solo si la corrida falla |
+ 
+`evidencia/` contiene una corrida de referencia (`Habita_MX_ejecutado.ipynb`, `pruebas.txt` y hashes `sha256_entrega.json`).
+ 
+### Reglas de entrada
+ 
+- Montos en MXN. Ingresos, gastos, deudas y reserva son **mensuales**.
+- Tasas y pesos como fracción (`0.105` = 10.5 %). Los seis pesos suman `1`.
+- Indicadores territoriales de 0 a 100 en sentido favorable (en `riesgos`, 100 = menor exposición). Un campo vacío es un dato ausente.
+---
+ 
+## 5. Estructura del proyecto
+ 
 | Ruta | Contenido |
 |---|---|
-| `main.py` | Entrada de terminal y diagnóstico. |
-| `habita/modelos.py` | Validación de entradas y conclusiones. |
-| `habita/motor.py` | Cálculos financieros, restricciones y ranking. |
-| `habita/equipo.py` | Agentes, herramientas, tareas y Crew. |
-| `habita/aplicacion.py` | Conexión con Ollama y exportación de resultados. |
-| `Habita_MX.ipynb` | Cuaderno para ejecutar desde VS Code. |
-| `datos/` | Perfil y catálogo de demostración. |
-| `tests/` | Pruebas automatizadas. |
-| `docs/` | Documento técnico editable y generadores. |
-| `evidencia/` | Demostración y cuaderno ejecutado de referencia. |
-| `salidas/` | Resultados de las corridas locales. |
-| `output/` | PDF y paquete de entrega. |
-
-## Referencias
-
-- [Ambientes de Python en VS Code](https://code.visualstudio.com/docs/python/environments).
-- [Cuadernos Jupyter en VS Code](https://code.visualstudio.com/docs/datascience/jupyter-notebooks).
-- [Administración de ambientes de Conda](https://docs.conda.io/projects/conda/en/stable/user-guide/tasks/manage-environments.html).
-- [Agentes de CrewAI](https://docs.crewai.com/en/concepts/agents).
-- [Tareas de CrewAI](https://docs.crewai.com/en/concepts/tasks).
-- [Conexión con modelos y Ollama](https://docs.crewai.com/en/concepts/llms).
-- [Ficha de Llama 3.2 de Meta](https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct).
-- [Russell y Norvig: Artificial Intelligence, A Modern Approach](https://aima.cs.berkeley.edu/).
-
-Las referencias APA 7 y los límites del prototipo se desarrollan en el documento técnico de Fase 3.
+| `main.py` | Entrada de terminal y diagnóstico |
+| `habita/equipo.py` | Agentes, herramientas, tareas, guardrails y Crew |
+| `habita/motor.py` | Cálculo financiero, restricciones y ranking |
+| `habita/modelos.py` | Modelos y validación Pydantic |
+| `habita/aplicacion.py` | Conexión con Ollama y exportación de resultados |
+| TODO | Código de la GUI y la API |
+| `Habita_MX.ipynb` | Cuaderno opcional (ver Anexo) |
+| `datos/` | Perfiles y catálogo sintéticos |
+| `tests/` | 25 pruebas automatizadas |
+| `evidencia/` | Corrida de referencia |
+| `salidas/` | Resultados locales |
+ 
+---
+ 
+## 6. Limitaciones y trabajo futuro
+ 
+- Datos territoriales y financieros simulados; no hay conectores a fuentes oficiales (INEGI, AMAI, SHF, Infonavit).
+- Sin CAT completo ni evaluación de aprobación crediticia.
+- Modelo local pequeño: explicaciones breves que requieren revisión humana.
+- Siguientes pasos: TODO (p. ej. datos reales por AGEB, streaming del avance por agente, despliegue en contenedor).
+---
+ 
+## Anexo · VS Code y Jupyter (opcional)
+ 
+1. Instala las extensiones **Python** y **Jupyter** de Microsoft.
+2. Selecciona el intérprete del ambiente `habita-mx` (Ctrl + Shift + P → *Python: Select Interpreter*).
+3. Abre `Habita_MX.ipynb`, elige el kernel `habita-mx` y ejecuta todo. La primera celda imprime `sys.executable` para comprobar el ambiente.
+---
+ 
+## Referencias (APA 7)
+ 
+CrewAI. (2025). *Agents*. CrewAI Documentation. https://docs.crewai.com/en/concepts/agents
+ 
+CrewAI. (2025). *Tasks*. CrewAI Documentation. https://docs.crewai.com/en/concepts/tasks
+ 
+CrewAI. (2025). *LLMs*. CrewAI Documentation. https://docs.crewai.com/en/concepts/llms
+ 
+Meta. (2024). *Llama 3.2 3B Instruct* [Modelo de lenguaje]. Hugging Face. https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct
+ 
+Ollama. (2025). *Ollama* [Software]. https://ollama.com
+ 
+Pydantic. (2025). *Pydantic documentation*. https://docs.pydantic.dev
+ 
+Russell, S., & Norvig, P. (2021). *Artificial intelligence: A modern approach* (4th ed.). Pearson.
+ 
+Wooldridge, M. (2009). *An introduction to multiagent systems* (2nd ed.). John Wiley & Sons.
