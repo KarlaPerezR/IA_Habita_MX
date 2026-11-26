@@ -1,217 +1,115 @@
-# Habita MX · Fase 3
+# Habita MX · Sistema multiagente de apoyo a decisiones de vivienda
 
-Sistema multiagente académico para evaluar alternativas de vivienda y escenarios de financiamiento. Utiliza **Python 3.11, CrewAI y Ollama local** con cuatro agentes: Perfil del Usuario, Evaluación de Zona, Financiero y Coordinador. Built with Llama.
+**Entrega final · Inteligencia Artificial · NRC 30033 · Universidad Anáhuac Puebla · Equipo 6 · 2026**
 
-## Interfaz web
+Habita MX ayuda a una persona a decidir **qué vivienda puede comprar en la Ciudad de México y bajo qué escenario de financiamiento**, sin rebasar su capacidad de pago ni sus requisitos de seguridad, traslado y espacio. Cuatro agentes especializados en **CrewAI** con un LLM local (**Ollama · llama3.2**) analizan el perfil, evalúan las viviendas, simulan el crédito e integran un ranking explicable. Las cifras oficiales salen de un motor determinista en Python y el LLM solo las interpreta. La persona usuaria audita y decide en una interfaz web.
 
-La rama `interfaz` incorpora un tablero responsivo conectado a los resultados reales del motor. Para ejecutarlo desde la raíz del proyecto:
+> Prototipo académico: el catálogo de 20 viviendas y las condiciones financieras son **simulados**. No constituye una oferta ni aprobación de crédito.
 
-```powershell
-python server.py
-```
-
-Abre `http://127.0.0.1:8000`. La API local `GET /api/dashboard` prepara el estado inicial. El formulario **Ajustar perfil** usa `POST /api/analyze` para ejecutar cuatro agentes CrewAI con Ollama local sobre las 20 viviendas; los cálculos numéricos permanecen en herramientas deterministas y los agentes interpretan evidencia validada.
-
-Durante el recálculo se ejecutan secuencialmente los agentes de perfil, zona, finanzas y coordinación definidos en `habita/equipo.py`. Cada salida pasa por un guardrail antes de incorporarse al resultado.
-
-En el primer acceso, el formulario de perfil ocupa la pantalla completa y el tablero permanece oculto hasta completar el análisis. El navegador conserva únicamente la marca local `habimas-configured`; los parámetros siguen validándose y calculándose en el servidor.
-
-El mapa usa Leaflet con cartografía de OpenStreetMap, zoom y marcadores seleccionables. Las coordenadas son aproximadas porque el catálogo académico contiene zonas ficticias; la atribución de OpenStreetMap permanece visible.
-
-Los perfiles de cliente se guardan por `ID de cliente` y nombre en `.runtime/client_profiles.json`. El mismo ID actualiza el registro existente; **Nuevo perfil** abre una configuración limpia y el selector permite recuperar perfiles previamente guardados.
-
-## Datos CDMX y PostGIS
-
-El primer alcance de datos usa 20 viviendas simuladas en `datos/viviendas_simuladas_cdmx.csv`; no representan anuncios vigentes. Valida el catálogo sin instalar dependencias:
-
-```powershell
-python pipeline/load_simulated_homes.py --validate-only
-```
-
-Para una base local, inicia `docker-compose.data.yml`, instala `requirements-data.txt`, copia las variables de `.env.data.example` a tu gestor local de secretos y ejecuta el cargador con `DATABASE_URL` definido. El cargador crea el esquema PostGIS y hace una carga idempotente. La definición completa de indicadores está en `docs/metodologia_mvp_cdmx.md`.
-
-La aplicación web debe iniciarse con `.venv/bin/python server.py` para disponer de CrewAI y LiteLLM. El pago máximo se valida tanto en navegador como en servidor y nunca puede superar `ingreso - gastos - deudas - reserva`.
-
-En macOS también puede utilizarse PostgreSQL 18 + PostGIS mediante Homebrew. El servidor lee `.env.data` sólo de manera local: consulta primero PostGIS y utiliza el CSV como respaldo si la base no está disponible. Las muestras oficiales se descargan con `python3 pipeline/ingest_official_sources.py`; se almacenan en `datos/raw/`, excluido de Git, junto con fecha, tamaño y SHA-256.
-
-Los indicadores territoriales de las 20 viviendas siguen marcados como provisionales y simulados. El traslado utiliza OpenTripPlanner cuando existe una ruta válida y conserva una estimación geodésica claramente etiquetada como respaldo.
-
-### Movilidad con OpenTripPlanner
-
-Ejecuta `python3 pipeline/prepare_otp.py`, `pipeline/build_otp.sh` y `pipeline/start_otp.sh`. HABIMAS consulta OpenTripPlanner 2.10 para rutas sobre la red OSM y muestra si el tiempo proviene de OTP o de la estimación provisional. El GTFS oficial descargado en noviembre de 2026 contiene 1,204 viajes cuyo calendario ya venció; por integridad metodológica no se alteran esas fechas. Hasta que SEMOVI publique un calendario vigente, el transporte público conserva la estimación y caminar, bicicleta y automóvil utilizan las rutas OSM que OTP puede resolver.
-
-Esta guía explica cómo trabajar desde **Visual Studio Code en Windows**, con Anaconda para administrar Python y PowerShell como terminal integrada. El catálogo contiene seis zonas ficticias y condiciones financieras simuladas.
-
-## 1. Preparar Visual Studio Code
-
-Necesitas estos componentes:
-
-| Componente | Uso |
+| Integrante | Matrícula |
 |---|---|
-| [Visual Studio Code](https://code.visualstudio.com/) | Editar y ejecutar el proyecto. |
-| Anaconda o Miniconda | Administrar el ambiente de Python 3.11. |
-| [Ollama](https://ollama.com/download) | Ejecutar el modelo de lenguaje local. |
-| Extensión **Python**, de Microsoft (`ms-python.python`) | Seleccionar el intérprete y ejecutar scripts. |
-| Extensión **Jupyter**, de Microsoft (`ms-toolsai.jupyter`) | Ejecutar el cuaderno dentro de VS Code. |
+| Berra Herrera, Oscar Santiago | 00561951 |
+| Gil Calvillo, Carlos Alberto | 00622866 |
+| López Flores, Carlos Alberto | 00569015 |
+| Olmedo Paredes, Citlalli Izel | 00465194 |
+| Pérez Rodríguez, Karla Angelica | 00608814 |
 
-Abre el panel de extensiones con **Ctrl + Shift + X** e instala Python y Jupyter si todavía no aparecen instaladas.
+---
 
-En **Archivo → Abrir carpeta**, selecciona la carpeta que contiene `main.py`, `environment.yml` y `Habita_MX.ipynb`. Si descargaste el ZIP, extráelo primero y abre la carpeta `habita-mx` que está dentro.
+## 1. Descripción y arquitectura
 
-Abre **Terminal → Nueva terminal** y elige **PowerShell**. Los comandos de esta guía se ejecutan desde la carpeta del proyecto. Comprueba la ubicación:
+### 1.1 ¿Por qué un sistema multiagente?
 
-```powershell
-Get-Location
-Test-Path .\main.py
+La decisión mezcla tres saberes con reglas distintas: el perfil y las restricciones del usuario, el contexto territorial y la matemática financiera. Separarlos en agentes con **una sola herramienta cada uno** permite auditar cada conclusión por etapa, probar cada agente por separado y evitar que un error se propague en silencio, como pasaría en un script monolítico. El Coordinador integra la evidencia con una política pública: **primero las restricciones obligatorias, después la suma ponderada y al final el desempate**.
+
+### 1.2 Arquitectura por capas
+
+```mermaid
+flowchart TB
+    U([Persona usuaria]) --> GUI
+    subgraph Presentación
+        GUI["web/ · index.html, app.js, styles.css<br/>Formulario · Monitor · Mapa Leaflet/OSM · Comparador · Cómo funciona"]
+    end
+    subgraph Servicio
+        API["server.py · http://127.0.0.1:8000<br/>GET /api/dashboard · POST /api/analyze"]
+    end
+    subgraph Orquestación
+        A1[Agente de Perfil] --> A2[Agente de Zona]
+        A1 --> A3[Agente Financiero]
+        A1 & A2 & A3 --> A4[Agente Coordinador]
+    end
+    subgraph Cálculo
+        MOTOR["habita/motor.py · capacidad, amortización, vetos, ranking"]
+        VAL["habita/modelos.py · validación Pydantic"]
+        MOV["habita/movilidad.py · OpenTripPlanner"]
+    end
+    subgraph Modelo
+        LLM["Ollama local · llama3.2:latest · 127.0.0.1:11434"]
+    end
+    subgraph Datos
+        CSV["datos/viviendas_simuladas_cdmx.csv"]
+        PG["PostGIS (opcional) · db/schema.sql"]
+        OUT["salidas/ · evidencia por corrida"]
+    end
+    GUI <-->|JSON| API --> A1
+    A1 & A2 & A3 & A4 -->|herramientas| MOTOR
+    MOTOR --> VAL
+    A1 & A2 & A3 & A4 -->|interpretación| LLM
+    CSV & PG --> MOTOR
+    MOV --> MOTOR
+    API --> OUT
 ```
 
-El segundo comando debe devolver `True`. Si devuelve `False`, abre la carpeta correcta antes de continuar.
+**Comunicación:** la GUI se comunica con `server.py` por REST/JSON. `GET /api/dashboard` prepara el estado inicial y `POST /api/analyze` valida el perfil y ejecuta los cuatro agentes sobre las 20 viviendas. El servidor consulta primero PostGIS y, si la base no está disponible, usa el CSV como respaldo.
 
-## 2. Preparar el ambiente de Anaconda
+### 1.3 Marco PEAS
 
-Comprueba los ambientes disponibles:
-
-```powershell
-conda env list
-```
-
-**Si aparece `habita-mx`, úsalo directamente.** Si no aparece, créalo una sola vez:
-
-```powershell
-conda env create -f environment.yml
-```
-
-Este archivo crea el ambiente `habita-mx` con Python 3.11 e instala las dependencias de `requirements.txt`. La instalación inicial requiere internet. [Documentación de Conda](https://docs.conda.io/projects/conda/en/stable/user-guide/tasks/manage-environments.html).
-
-Verifica el intérprete y la instalación de CrewAI:
-
-```powershell
-conda run -n habita-mx python -c "import sys; from importlib.metadata import version; print(sys.executable); print('CrewAI:', version('crewai'))"
-```
-
-Si aparece `PackageNotFoundError` para CrewAI, el ambiente existe pero le faltan dependencias. Complétalas y repite la comprobación:
-
-```powershell
-conda run --no-capture-output -n habita-mx python -m pip install -r requirements.txt
-```
-
-Conserva la ruta de `python.exe` que imprime la comprobación: la usarás en el siguiente paso. `requirements-lock.txt` registra las versiones exactas de la demostración original en Windows.
-
-### Si PowerShell no reconoce conda
-
-Para una instalación estándar de Anaconda del usuario actual, puedes invocarlo por su ruta:
-
-```powershell
-$habitaConda = Join-Path $env:USERPROFILE "anaconda3\Scripts\conda.exe"
-Test-Path $habitaConda
-& $habitaConda env list
-```
-
-Si la comprobación devuelve `True`, sustituye `conda` por `& $habitaConda` en los comandos de esta guía. Por ejemplo:
-
-```powershell
-& $habitaConda run --no-capture-output -n habita-mx python main.py --diagnostico
-```
-
-Si devuelve `False`, localiza tu instalación de Anaconda o Miniconda y asigna a `$habitaConda` la ruta de su archivo `Scripts\conda.exe`. La carpeta puede variar según la instalación.
-
-## 3. Seleccionar el intérprete en VS Code
-
-1. Abre `main.py` en el editor.
-2. Presiona **Ctrl + Shift + P**.
-3. Ejecuta **Python: Select Interpreter / Python: Seleccionar intérprete**.
-4. Selecciona el ambiente **habita-mx**, con Python 3.11.
-
-Si no aparece, utiliza **Enter interpreter path / Introducir ruta del intérprete** y pega la ruta de `python.exe` obtenida en el paso anterior. El intérprete seleccionado se utiliza para las funciones de Python del editor, la ejecución y la depuración. [Documentación de VS Code](https://code.visualstudio.com/docs/python/environments).
-
-Los comandos de esta guía usan `conda run -n habita-mx`, que elige explícitamente el ambiente aunque PowerShell no lo active automáticamente. Si prefieres activarlo, ejecuta `conda activate habita-mx` y después utiliza `python` directamente.
-
-## 4. Comprobar Ollama y el modelo
-
-Abre la aplicación **Ollama** y mantenla funcionando. En la terminal de VS Code consulta los modelos instalados:
-
-```powershell
-ollama list
-```
-
-Debe aparecer `llama3.2:latest`. Si falta, descárgalo:
-
-```powershell
-ollama pull llama3.2
-```
-
-Comprueba la conexión del proyecto:
-
-```powershell
-conda run --no-capture-output -n habita-mx python main.py --diagnostico
-```
-
-Una respuesta correcta muestra el modelo, su digest, las versiones de Python, CrewAI y Ollama, y la dirección local `http://127.0.0.1:11434`.
-
-Si Ollama no responde, ejecuta `ollama serve` en **otra terminal** y déjala abierta. Si el puerto ya está ocupado, puede que el servidor esté iniciado: vuelve a probar el diagnóstico.
-
-## 5. Ejecutar los cuatro agentes
-
-Desde la terminal integrada de VS Code:
-
-```powershell
-conda run --no-capture-output -n habita-mx python main.py --modo crew
-```
-
-El flujo es **Perfil → Zona → Financiero → Coordinador**. Verás mensajes de herramientas utilizadas y tareas completadas. La ejecución puede tardar desde decenas de segundos hasta varios minutos, según el equipo.
-
-Al terminar, la terminal muestra el resultado y la ruta donde se guardó la evidencia. Cada corrida crea una carpeta nueva dentro de `salidas/`.
-
-Para las siguientes sesiones, abre el proyecto en VS Code, inicia Ollama y ejecuta el comando anterior.
-
-### Consultar los resultados
-
-En el explorador de VS Code, abre la carpeta de la corrida dentro de `salidas/`:
-
-| Archivo | Contenido |
+| | Especificación |
 |---|---|
-| `reporte.md` | Ranking explicado, alertas y alternativas descartadas. |
-| `resultado.json` | Resultado consolidado, duración y metadatos. |
-| `interacciones.jsonl` | Herramientas utilizadas, validaciones y conclusiones breves. |
-| `perfil.json`, `zonas.json`, `finanzas.json`, `coordinacion.json` | Salidas aceptadas de cada tarea. |
-| `calculos.json` | Evidencia numérica de todas las etapas. |
-| `entrada_perfil.json`, `entrada_zonas.csv` | Copias de las entradas utilizadas. |
+| **P · Desempeño** | 0 recomendaciones que violen restricciones obligatorias; cobertura de indicadores ≥ 80 %; trazabilidad de cada corrida; mismas entradas → mismo ranking numérico; tiempo de respuesta y satisfacción como metas de producción. |
+| **E · Entorno** | Perfil financiero y de preferencias del usuario; 20 viviendas simuladas en CDMX con indicadores 0–100 de seguridad, riesgos, vivienda, movilidad y entorno; supuestos financieros didácticos. |
+| **A · Actuadores** | Ranking con afinidad, mapa, fichas, escenarios Base / Estrés / 15 años, motivos de descarte, alertas, explicación por agente y archivos de evidencia. |
+| **S · Sensores** | Formulario de la GUI, catálogo CSV o PostGIS, rutas de OpenTripPlanner, salidas aceptadas de tareas previas (`Task.context`) y resultado de los validadores. |
 
-Para leer `reporte.md` con formato, ábrelo y presiona **Ctrl + Shift + V**. Si una corrida falla, consulta `error.json` en su carpeta; esa corrida no produce un resultado final exitoso.
+**Propiedades del entorno:** parcialmente observable, no determinista en el mundo real y determinista en el cálculo, dinámico pero estático durante cada corrida, mixto (principalmente discreto), episódico y multiagente cooperativo.
 
-## 6. Ejecutar el cuaderno Jupyter en VS Code
+### 1.4 Agentes
 
-1. Abre `Habita_MX.ipynb` desde el explorador del editor.
-2. Pulsa **Select Kernel / Seleccionar kernel**, arriba a la derecha.
-3. Elige el ambiente **habita-mx**. Si hace falta, abre **Select Another Kernel / Seleccionar otro kernel → Python Environments / Ambientes de Python**.
-4. Ejecuta las celdas en orden con **Shift + Enter**, o utiliza **Run All / Ejecutar todo**.
+| # | Agente | Goal | Herramienta | Contexto que recibe |
+|---|---|---|---|---|
+| 1 | Perfil del Usuario | Identificar restricciones obligatorias, preferencias y capacidad mensual sin inventar datos. | `consultar_perfil` | Datos del usuario |
+| 2 | Evaluación de Zona | Evaluar cinco dimensiones territoriales, cobertura y cumplimiento del perfil. | `evaluar_catalogo` | Perfil aceptado |
+| 3 | Financiero | Comprobar enganche, gastos iniciales, mensualidad y sensibilidad a tasa y plazo. | `calcular_financiamiento` | Perfil aceptado |
+| 4 | Coordinador | Integrar evidencia y explicar el ranking sin recomendar alternativas que incumplan restricciones. | `integrar_evaluaciones` | Perfil, Zona y Financiero |
 
-La primera celda imprime `sys.executable`: comprueba que corresponda al mismo `python.exe` seleccionado para el proyecto. El kernel del cuaderno y el intérprete del editor pueden seleccionarse por separado. [Documentación de Jupyter en VS Code](https://code.visualstudio.com/docs/datascience/jupyter-notebooks).
+El *backstory* de cada agente está en `habita/equipo.py` (`ROLES`). Todos tienen `allow_delegation=False`, `max_iter=4` y `memory=False`, y se ejecutan con `Process.sequential`.
 
-El cuaderno permite revisar el diagnóstico, editar el perfil, ejecutar los agentes, leer sus conclusiones y comparar las cifras con el motor de cálculo. Guarda el perfil editado en `datos/perfil_notebook.json` y conserva el caso original. La llamada al Crew utiliza otro hilo para ser compatible con el ciclo de eventos de Jupyter.
+### 1.5 Guardrails y seguridad
 
-La ejecución se realiza dentro de VS Code; no necesitas iniciar un servidor de notebooks en el navegador.
+- **Guardrail por tarea** (`guardrail_max_retries=2`): rechaza la respuesta si el agente no usó su herramienta, si omite IDs o si el ranking no coincide con el del motor.
+- **Orden forzado:** cada herramienta exige que las tareas previas estén aceptadas.
+- **Cifras oficiales desde Python:** el número publicado nunca es una copia redactada por el LLM.
+- **Vetos antes que puntajes:** presupuesto, habitaciones, traslado, cobertura, seguridad, riesgos, enganche y capacidad de pago.
+- **Validación de entradas** en navegador y en servidor: el pago máximo nunca puede superar `ingreso − gastos − deudas − reserva`.
+- **Inferencia local y herramientas acotadas:** sin acceso a archivos arbitrarios, red ni ejecución de código; telemetría de CrewAI desactivada.
 
-## 7. Cambiar el caso de prueba
+### 1.6 Human-in-the-Loop
 
-Desde el explorador de VS Code, duplica `datos/perfil_demo.json`, llama a la copia `mi_perfil.json` y edita sus valores. Ejecuta:
+La persona revisa sus entradas antes de enviarlas, audita el ranking, el mapa, los escenarios y las etiquetas COMPATIBLE / REVISAR, lee la explicación de cada agente en **Cómo funciona** y ajusta criterios con **Nuevo perfil**. El sistema nunca relaja restricciones por su cuenta. Los perfiles se guardan por ID de cliente en `.runtime/client_profiles.json`.
 
-```powershell
-conda run --no-capture-output -n habita-mx python main.py --perfil datos/mi_perfil.json --zonas datos/zonas_demo.csv
-```
+---
 
-Reglas de entrada:
+## 2. Prerrequisitos de software
 
-- Los montos se expresan en pesos mexicanos. Ingresos, gastos, deudas y reserva son mensuales; evita incluir deudas o gasto adicional de vivienda dentro de otros gastos para no contarlos dos veces.
-- El enganche y el ahorro para gastos iniciales son bolsas separadas.
-- Tasas y pesos son fracciones: `0.105` equivale a 10.5 %. Los seis pesos deben sumar `1`.
-- La descripción libre aporta contexto. Las cifras estructuradas determinan cálculos y restricciones.
-- Los indicadores territoriales van de 0 a 100, con sentido favorable. En `riesgos`, 100 significa menor exposición. Un campo vacío representa un dato ausente.
-- El catálogo registra `simulado`, `fuente`, `fecha` y `nivel_geografico`. Este prototipo no incluye conectores a fuentes oficiales.
+| Componente | Versión |
+|---|---|
+| Python | 3.11 |
+| Conda (Anaconda o Miniconda) | Reciente |
+| Ollama | Reciente, con `llama3.2:latest` |
+| Git | Cualquiera |
+| PostgreSQL + PostGIS, OpenTripPlanner 2.10 | Opcionales |
 
-### Cambiar el modelo o el tiempo de espera
-
-Si todavía no tienes un archivo `.env`, duplica `.env.example` y renombra la copia como `.env`. Su configuración inicial es:
+Dependencias en `requirements.txt` (instaladas por `environment.yml`). Ollama se configura por variables de entorno con estos valores por defecto, por lo que no es obligatorio crear un archivo de configuración:
 
 ```dotenv
 OLLAMA_BASE_URL=http://127.0.0.1:11434
@@ -220,70 +118,109 @@ OLLAMA_TIMEOUT=240
 OLLAMA_NUM_CTX=8192
 ```
 
-Para cambiar el modelo, usa el nombre exacto de `ollama list` y un modelo local que admita herramientas. La demostración se verificó con `llama3.2:latest`; un modelo diferente requiere comprobar de nuevo sus respuestas. Tras editar `.env`, inicia una corrida nueva; en Jupyter, reinicia el kernel antes de ejecutar las celdas.
+---
 
-## 8. Pruebas y cálculo sin IA
+## 3. Instalación y despliegue
 
-Ejecuta las pruebas desde la terminal integrada:
+```bash
+# 1. Clonar
+git clone https://github.com/KarlaPerezR/IA_Habita_MX.git
+cd IA_Habita_MX
 
-```powershell
-conda run --no-capture-output -n habita-mx python -m pytest -q --basetemp tmp/pruebas
+# 2. Ambiente
+conda env create -f environment.yml      # solo la primera vez
+conda activate habita-mx
+
+# 3. Modelo local
+ollama pull llama3.2
+ollama serve                             # en otra terminal, si la app de Ollama no está abierta
+
+# 4. Interfaz
+python server.py
+# Abrir http://127.0.0.1:8000
 ```
 
-La verificación original aprobó **25 pruebas**, que cubren amortización, tasa cero, contado, datos inválidos, restricciones, ausencia de alternativas y validación del ranking.
+### Opcional: PostGIS
 
-Para obtener únicamente la línea base de cálculo:
+Inicia `docker-compose.data.yml`, instala `requirements-data.txt`, define `DATABASE_URL` a partir de `.env.data.example` y ejecuta el cargador. Crea el esquema PostGIS y hace una carga idempotente. Sin base de datos, el servidor usa el CSV.
 
-```powershell
-conda run --no-capture-output -n habita-mx python main.py --modo calculo
+### Opcional: movilidad con OpenTripPlanner
+
+```bash
+python pipeline/prepare_otp.py
+pipeline/build_otp.sh
+pipeline/start_otp.sh
 ```
 
-Este modo funciona sin Ollama y se identifica como `calculo`. El modo `crew` ejecuta los cuatro agentes. El cuaderno compara los resultados oficiales de ambos modos mediante una aserción.
+La app indica si el tiempo de traslado proviene de OTP o de la estimación provisional. El GTFS oficial descargado en noviembre de 2026 tiene calendarios vencidos; por integridad metodológica no se alteran, así que el transporte público conserva la estimación y caminar, bicicleta y automóvil usan rutas OSM.
 
+---
 
-## Arquitectura y política de decisión
+## 4. Instrucciones de reproducción
 
-| Agente | Herramienta | Contexto recibido |
-|---|---|---|
-| Perfil del Usuario | `consultar_perfil` | Datos del usuario. |
-| Evaluación de Zona | `evaluar_catalogo` | Perfil validado. |
-| Financiero | `calcular_financiamiento` | Perfil validado. |
-| Coordinador | `integrar_evaluaciones` | Perfil, Zona y Financiero. |
+```bash
+python pipeline/load_simulated_homes.py --validate-only   # valida el catálogo de 20 viviendas
+python server.py                                          # abre http://127.0.0.1:8000
+```
 
-`Process.sequential` ejecuta las tareas en orden. Todos los agentes tienen `allow_delegation=False`; colaboran mediante `Task.context` y evidencia compartida.
+### Caso de la demostración en vivo
 
-Python calcula capacidad mensual, amortización y puntuaciones; los agentes utilizan las herramientas e interpretan los resultados. El control de salida exige usar la herramienta y comprueba identificadores y orden del ranking. Las cifras oficiales proceden de Python; las explicaciones del modelo requieren revisión humana.
+| Campo | Valor |
+|---|---|
+| ID / nombre | CLI-002 · Carlos Gil 2 |
+| Ingreso / gastos / deudas / reserva | 90,000 / 13,000 / 10,000 / 30,000 MXN |
+| Pago máximo / presupuesto | 37,000 / 5,000,000 MXN |
+| Enganche / ahorro gastos iniciales | 800,000 / 300,000 MXN |
+| Habitaciones / traslado máximo | 2 / 60 min · transporte público · salida 08:00 |
+| Seguridad mínima | 40 |
 
-Primero se aplican las restricciones de presupuesto, habitaciones, traslado, cobertura, seguridad, riesgos, enganche y capacidad de pago. Después se ordenan las alternativas viables mediante seis dimensiones ponderadas. Los empates se resuelven por menor pago mensual y luego por ID.
+**Resultado esperado:** capacidad mensual de **$21,500** y **4 de 20** viviendas viables (Vallejo, Azcapotzalco, Alameda y Olivar). Si se captura un pago máximo de 37,500, la GUI bloquea el envío porque supera el efectivo disponible.
 
-Los supuestos financieros son didácticos. El escenario de estrés compara una tasa dos puntos porcentuales mayor al contratar; no representa un cambio automático en una hipoteca fija vigente. El prototipo no calcula un CAT completo ni determina aprobación de crédito.
+Durante la corrida, la terminal imprime `[herramienta]`, `[tarea_completada]` y `[validacion_rechazada]` por etapa. La evidencia de cada ejecución desde la interfaz se guarda localmente en `.runtime/web_agent_runs/<ID de ejecución>/`, con la bitácora `interacciones.jsonl` y la salida aceptada de cada agente (`perfil.json`, `zonas.json`, `finanzas.json`, `coordinacion.json`). Las carpetas `salidas/` y `evidencia/` conservan corridas de referencia del motor.
 
-## Estructura del proyecto
+---
+
+## 5. Estructura del proyecto
 
 | Ruta | Contenido |
 |---|---|
-| `main.py` | Entrada de terminal y diagnóstico. |
-| `habita/modelos.py` | Validación de entradas y conclusiones. |
-| `habita/motor.py` | Cálculos financieros, restricciones y ranking. |
-| `habita/equipo.py` | Agentes, herramientas, tareas y Crew. |
-| `habita/aplicacion.py` | Conexión con Ollama y exportación de resultados. |
-| `Habita_MX.ipynb` | Cuaderno para ejecutar desde VS Code. |
-| `datos/` | Perfil y catálogo de demostración. |
-| `tests/` | Pruebas automatizadas. |
-| `docs/` | Documento técnico editable y generadores. |
-| `evidencia/` | Demostración y cuaderno ejecutado de referencia. |
-| `salidas/` | Resultados de las corridas locales. |
-| `output/` | PDF y paquete de entrega. |
+| `server.py` | Servidor local de la interfaz y API (`/api/dashboard`, `/api/analyze`) |
+| `web/` | Interfaz: `index.html`, `app.js`, `styles.css` |
+| `habita/equipo.py` | Agentes, herramientas, tareas, guardrails y Crew |
+| `habita/motor.py` | Cálculo financiero, restricciones y ranking |
+| `habita/modelos.py` | Modelos y validación Pydantic |
+| `habita/catalogo.py` | Carga del catálogo desde PostGIS o CSV |
+| `habita/movilidad.py` | Consulta de rutas en OpenTripPlanner |
+| `habita/aplicacion.py` | Conexión con Ollama y exportación de resultados |
+| `datos/` | Catálogo de 20 viviendas simuladas en CDMX |
+| `db/`, `pipeline/`, `otp/` | Esquema PostGIS, cargadores y configuración de OTP |
+| `docs/` | Metodología del MVP y fuentes de datos reales |
+| `Habita_MX.ipynb` | Cuaderno de trabajo |
+| `evidencia/`, `salidas/` | Corridas de referencia del motor |
 
-## Referencias
+---
 
-- [Ambientes de Python en VS Code](https://code.visualstudio.com/docs/python/environments).
-- [Cuadernos Jupyter en VS Code](https://code.visualstudio.com/docs/datascience/jupyter-notebooks).
-- [Administración de ambientes de Conda](https://docs.conda.io/projects/conda/en/stable/user-guide/tasks/manage-environments.html).
-- [Agentes de CrewAI](https://docs.crewai.com/en/concepts/agents).
-- [Tareas de CrewAI](https://docs.crewai.com/en/concepts/tasks).
-- [Conexión con modelos y Ollama](https://docs.crewai.com/en/concepts/llms).
-- [Ficha de Llama 3.2 de Meta](https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct).
-- [Russell y Norvig: Artificial Intelligence, A Modern Approach](https://aima.cs.berkeley.edu/).
+## 6. Limitaciones y trabajo futuro
 
-Las referencias APA 7 y los límites del prototipo se desarrollan en el documento técnico de Fase 3.
+- Indicadores territoriales y condiciones financieras simulados; la conexión a fuentes oficiales está documentada en `docs/fuentes_datos_reales.md`.
+- Sin CAT completo ni evaluación de aprobación crediticia.
+- La inferencia local tarda decenas de segundos; el monitor confirma el estado de los agentes al terminar la corrida.
+- Siguientes pasos: sustituir indicadores provisionales con FGJ, Atlas de Riesgos, INEGI y DENUE; obtener un GTFS con calendarios vigentes; incorporar pruebas automatizadas y monitoreo de calidad de datos; mostrar el avance por agente en tiempo real; y configurar un despliegue con gestión segura de secretos.
+
+---
+
+## Referencias (APA 7)
+
+CrewAI. (s. f.). *Agents*. CrewAI Documentation. Recuperado el 5 de noviembre de 2026, de https://docs.crewai.com/en/concepts/agents
+
+CrewAI. (s. f.). *Tasks*. CrewAI Documentation. Recuperado el 5 de noviembre de 2026, de https://docs.crewai.com/en/concepts/tasks
+
+Meta. (2024, 25 de septiembre). *Llama-3.2-3B-Instruct* [Modelo de lenguaje]. Hugging Face. https://huggingface.co/meta-llama/Llama-3.2-3B-Instruct
+
+Ollama. (s. f.). *Introduction*. Ollama Documentation. Recuperado el 12 de noviembre de 2026, de https://docs.ollama.com/api/introduction
+
+Russell, S., & Norvig, P. (2021). *Artificial intelligence: A modern approach* (4.ª ed.). Pearson.
+
+Wooldridge, M. (2009). *An introduction to multiagent systems* (2.ª ed.). Wiley.
+
+Built with Llama.
