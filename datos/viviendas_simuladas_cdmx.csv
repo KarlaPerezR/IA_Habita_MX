@@ -1,0 +1,21 @@
+id,nombre,colonia,alcaldia,latitud,longitud,precio,habitaciones,superficie_m2,tipo,fuente,fecha,simulada
+V001,Departamento Alameda,Centro,Cuauhtémoc,19.4352,-99.1436,2450000,2,68,departamento,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V002,Loft Doctores,Doctores,Cuauhtémoc,19.4179,-99.1431,1850000,1,48,departamento,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V003,Departamento Santa María,Santa María la Ribera,Cuauhtémoc,19.4520,-99.1572,2900000,2,76,departamento,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V004,Departamento Portales,Portales Norte,Benito Juárez,19.3697,-99.1479,3150000,2,72,departamento,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V005,Departamento Narvarte,Narvarte Poniente,Benito Juárez,19.3892,-99.1588,3900000,3,94,departamento,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V006,Departamento Mixcoac,Mixcoac,Benito Juárez,19.3747,-99.1862,3450000,2,80,departamento,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V007,Casa Lindavista,Lindavista,Gustavo A. Madero,19.4898,-99.1276,4200000,3,145,casa,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V008,Departamento Aragón,San Juan de Aragón,Gustavo A. Madero,19.4617,-99.0790,1650000,2,62,departamento,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V009,Departamento Vallejo,Nueva Industrial Vallejo,Gustavo A. Madero,19.4940,-99.1600,1950000,2,65,departamento,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V010,Casa Clavería,Clavería,Azcapotzalco,19.4648,-99.1812,4650000,3,155,casa,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V011,Departamento Azcapotzalco,Azcapotzalco Centro,Azcapotzalco,19.4847,-99.1859,2200000,2,70,departamento,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V012,Departamento Escandón,Escandón I Sección,Miguel Hidalgo,19.4028,-99.1774,3850000,2,78,departamento,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V013,Departamento Anáhuac,Anáhuac I Sección,Miguel Hidalgo,19.4411,-99.1770,3400000,2,74,departamento,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V014,Casa Copilco,Copilco Universidad,Coyoacán,19.3340,-99.1820,5100000,3,165,casa,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V015,Departamento Culhuacán,CTM Culhuacán,Coyoacán,19.3260,-99.1240,2100000,2,67,departamento,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V016,Departamento Iztacalco,Agrícola Oriental,Iztacalco,19.3950,-99.0750,1750000,2,61,departamento,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V017,Casa Iztapalapa,Sinatel,Iztapalapa,19.3627,-99.1130,2350000,3,115,casa,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V018,Departamento Ermita,Ermita Zaragoza,Iztapalapa,19.3675,-98.9970,1450000,2,58,departamento,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V019,Casa Tlalpan,San Pedro Mártir,Tlalpan,19.2650,-99.1700,3600000,3,140,casa,Simulación calibrada SHF-SNIIV,2026-11-21,true
+V020,Departamento Olivar,Olivar del Conde,Álvaro Obregón,19.3730,-99.2080,2300000,2,69,departamento,Simulación calibrada SHF-SNIIV,2026-11-21,true

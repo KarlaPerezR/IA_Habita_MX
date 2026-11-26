@@ -1,8 +1,9 @@
 """Contratos de entrada. Los montos son MXN y las tasas son fracciones."""
+from __future__ import annotations
 from datetime import date
 import json
 from math import isclose
-from typing import Annotated
+from typing import Annotated, Optional
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 Monto = Annotated[float, Field(ge=0, allow_inf_nan=False)]
@@ -44,6 +45,11 @@ class Perfil(Contrato):
     pago_maximo_usuario: Monto
     habitaciones_minimas: int = Field(ge=1, le=20)
     traslado_maximo_min: Annotated[float, Field(gt=0)]
+    destino_nombre: str = Field(default="Centro de trabajo", min_length=2, max_length=160)
+    destino_latitud: float = Field(default=19.4326, ge=19.0, le=20.0)
+    destino_longitud: float = Field(default=-99.1332, ge=-100.0, le=-98.0)
+    modo_traslado: str = Field(default="transporte_publico", pattern=r"^(transporte_publico|automovil|bicicleta|caminando)$")
+    hora_salida: str = Field(default="08:00", pattern=r"^([01][0-9]|2[0-3]):[0-5][0-9]$")
     seguridad_minima: Puntaje
     riesgos_minimo: Puntaje
     plazo_anios: int = Field(ge=1, le=40)
@@ -60,24 +66,34 @@ class Perfil(Contrato):
     def tasa_estres_valida(self):
         if self.tasa_anual + self.incremento_estres > 1:
             raise ValueError("La tasa anual de estrés debe ser menor o igual a 100 %.")
+        disponible = self.ingreso_mensual - self.gastos_mensuales - self.deudas_mensuales - self.reserva_mensual
+        if self.pago_maximo_usuario > max(0, disponible):
+            raise ValueError("El pago máximo no puede superar ingreso - gastos - deudas - reserva.")
         return self
 
 
 class Zona(Contrato):
-    id: str = Field(pattern=r"^Z[0-9]{2,4}$")
+    id: str = Field(pattern=r"^[ZV][0-9]{2,4}$")
     nombre: str = Field(min_length=1)
     precio: Annotated[float, Field(gt=0)]
     habitaciones: int = Field(ge=1)
     traslado_min: Monto
-    seguridad: Puntaje | None
-    riesgos: Puntaje | None
-    vivienda: Puntaje | None
-    movilidad: Puntaje | None
-    entorno: Puntaje | None
+    seguridad: Optional[Puntaje]
+    riesgos: Optional[Puntaje]
+    vivienda: Optional[Puntaje]
+    movilidad: Optional[Puntaje]
+    entorno: Optional[Puntaje]
     fuente: str = Field(min_length=1)
     fecha: date
     nivel_geografico: str = Field(min_length=1)
     simulado: bool
+    colonia: str = ""
+    alcaldia: str = ""
+    latitud: float = 19.4326
+    longitud: float = -99.1332
+    superficie_m2: float = 0
+    tipo: str = "vivienda"
+    motor_traslado: str = "estimacion_geodesica"
 
 
 class Conclusion(Contrato):
@@ -85,7 +101,7 @@ class Conclusion(Contrato):
     resumen: str = Field(min_length=20, max_length=1800)
     ids_revisados: list[str]
     ranking_ids: list[str] = Field(default_factory=list)
-    recomendacion_id: str | None = None
+    recomendacion_id: Optional[str] = None
 
 
 def validar_conclusion(texto: str, etapa: str, datos: dict, ids: list[str]) -> Conclusion:

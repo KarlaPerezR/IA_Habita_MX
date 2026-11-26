@@ -68,6 +68,10 @@ def evaluar_zonas(perfil: Perfil, zonas: list[Zona]) -> dict:
             "cumple": not razones, "motivos": razones,
             "fuente": z.fuente, "fecha": z.fecha.isoformat(),
             "nivel_geografico": z.nivel_geografico, "simulado": z.simulado,
+            "habitaciones": z.habitaciones, "traslado_min": z.traslado_min,
+            "colonia": z.colonia, "alcaldia": z.alcaldia, "latitud": z.latitud,
+            "longitud": z.longitud, "superficie_m2": z.superficie_m2, "tipo": z.tipo,
+            "motor_traslado": z.motor_traslado,
         })
     return {"zonas": resultados}
 

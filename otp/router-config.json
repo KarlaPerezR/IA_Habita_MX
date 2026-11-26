@@ -1,0 +1,8 @@
+{
+  "routingDefaults": {
+    "locale": "es_MX",
+    "numItineraries": 3,
+    "searchWindow": "PT2H",
+    "maxJourneyDuration": "PT4H"
+  }
+}

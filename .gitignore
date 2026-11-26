@@ -1,0 +1,10 @@
+.runtime/client_profiles.json
+.runtime/client_profiles.tmp
+.env.data
+datos/raw/
+.runtime/otp/
+.venv/
+.runtime/web_agent_runs/
+.runtime/*.db
+__pycache__/
+*.py[cod]

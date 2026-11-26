@@ -1,6 +1,7 @@
 """Cuatro Agent, cuatro Task y un Crew secuencial, inspirados en el notebook base."""
 import json
 import os
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -46,6 +47,25 @@ ROLES = {
     },
 }
 
+def extraer_resumen_llm(raw: str) -> str:
+    """Recupera sólo el texto narrativo; nunca cifras estructuradas ni IDs del modelo."""
+    text = raw.strip()
+    if text.startswith("```"):
+        lines = text.splitlines()
+        text = "\n".join(lines[1:-1] if lines[-1].strip() == "```" else lines[1:]).strip()
+    try:
+        content = json.loads(text)
+        if isinstance(content, dict) and set(content) == {"formato_respuesta"}:
+            content = content["formato_respuesta"]
+        summary = content.get("resumen") if isinstance(content, dict) else None
+    except json.JSONDecodeError:
+        match = re.search(r'["\']?resumen["\']?\s*:\s*["\']?(.*)', text, re.DOTALL | re.IGNORECASE)
+        summary = match.group(1) if match else text
+        summary = re.sub(r'["\'}\s]+$', '', summary).replace('\\"', '"').strip()
+    if not isinstance(summary, str) or len(summary.strip()) < 20:
+        raise ValueError("El resumen del agente está vacío o es demasiado corto.")
+    return summary.strip()[:1800]
+
 
 class Bitacora:
     """Eventos observables y justificaciones breves; no razonamiento interno privado."""
@@ -90,14 +110,11 @@ def construir_crew(perfil: Perfil, zonas: list[Zona], llm: LLM, bitacora: Bitaco
                 mejor, barata = datos["ranking"][0], min(datos["ranking"], key=lambda z: z["pago_total"])
                 hechos += [f"{mejor['id']} maximiza la puntuación ponderada; {barata['id']} tiene el menor pago mensual."]
                 hechos += [f"{z['id']}: " + a for z in datos["ranking"] for a in z["alertas"]]
-        formato = {"resumen": "Escribe aquí tu interpretación breve de esta etapa en español.",
-                   "ids_revisados": [] if etapa == "perfil" else ids,
-                   "ranking_ids": [z["id"] for z in datos["ranking"]] if etapa == "coordinacion" else [],
-                   "recomendacion_id": datos["recomendacion_id"] if etapa == "coordinacion" else None}
+        formato = {"resumen": "Escribe aquí tu interpretación breve de esta etapa en español."}
         return json.dumps({"evidencia": datos, "hechos_para_resumir": hechos, "formato_respuesta": formato,
-                           "instruccion": "Herramienta completada. Responde con formato_respuesta y redacta solo resumen. "
-                           "Resume únicamente hechos_para_resumir, sin nuevas afirmaciones. No repitas la llamada. "
-                           "Todos los importes son MXN. El estrés es una alerta, no un veto."},
+                           "instruccion": "Herramienta completada. Responde sólo con un JSON que contenga resumen. "
+                           "Resume únicamente hechos_para_resumir, sin nuevas afirmaciones ni listas de IDs. "
+                           "No repitas la llamada. Todos los importes son MXN. El estrés es una alerta, no un veto."},
                           ensure_ascii=False)
 
     def exigir(*etapas):
@@ -133,14 +150,19 @@ def construir_crew(perfil: Perfil, zonas: list[Zona], llm: LLM, bitacora: Bitaco
             try:
                 if etapa not in estado:
                     raise ValueError("Primero debes llamar a tu herramienta, sin argumentos.")
-                conclusion = validar_conclusion(salida.raw, etapa, estado[etapa], ids)
+                summary = extraer_resumen_llm(salida.raw)
+                canonical = {"resumen": summary,
+                             "ids_revisados": [] if etapa == "perfil" else ids,
+                             "ranking_ids": [z["id"] for z in estado[etapa]["ranking"]] if etapa == "coordinacion" else [],
+                             "recomendacion_id": estado[etapa]["recomendacion_id"] if etapa == "coordinacion" else None}
+                conclusion = validar_conclusion(json.dumps(canonical, ensure_ascii=False), etapa, estado[etapa], ids)
                 # Los números oficiales proceden de Python y no de una copia redactada por el LLM.
                 evidencia = {"etapa": etapa, "datos": estado[etapa],
                              "conclusion": conclusion.model_dump()}
                 return True, json.dumps(evidencia, ensure_ascii=False)
             except (ValueError, KeyError) as error:
                 bitacora.registrar("validacion_rechazada", etapa=etapa, motivo=str(error))
-                return False, str(error) + " Devuelve solo el JSON solicitado, con resumen, ids_revisados, ranking_ids y recomendacion_id."
+                return False, str(error) + ' Devuelve sólo {"resumen":"interpretación breve"}.'
         return validar
 
     def al_terminar(etapa, contexto):
@@ -160,15 +182,10 @@ def construir_crew(perfil: Perfil, zonas: list[Zona], llm: LLM, bitacora: Bitaco
     tareas = []
     indices_contexto = [[], [0], [0], [0, 1, 2]]
     instrucciones = [
-        "Interpreta requisitos, prioridades y alertas del perfil. No cambies las cifras estructuradas. "
-        "ids_revisados y ranking_ids son listas vacías, recomendacion_id es null.",
-        "Compara compatibilidad territorial, cobertura y motivos de descarte. "
-        "ids_revisados contiene TODOS los IDs, incluso descartados. ranking_ids=[], recomendacion_id=null.",
-        "Explica qué pagos caben en el límite y cuáles fallan; distingue escenario base y estrés. "
-        "ids_revisados contiene TODOS los IDs. ranking_ids=[], recomendacion_id=null.",
-        "Explica el compromiso entre ubicación y holgura financiera. Señala las alertas de estrés. "
-        "ids_revisados contiene TODOS los IDs, incluidos descartados. Copia ranking_ids en el orden "
-        "de la herramienta y recomendacion_id de su resultado. Si no hay opciones, usa [] y null.",
+        "Interpreta requisitos, prioridades y alertas del perfil. No cambies las cifras estructuradas.",
+        "Compara compatibilidad territorial, cobertura y motivos de descarte.",
+        "Explica qué pagos caben en el límite y cuáles fallan; distingue escenario base y estrés.",
+        "Explica el compromiso entre ubicación y holgura financiera. Señala las alertas de estrés.",
     ]
     for i, (etapa, herramienta) in enumerate(zip(ROLES, herramientas)):
         contextos = indices_contexto[i]
@@ -182,9 +199,8 @@ def construir_crew(perfil: Perfil, zonas: list[Zona], llm: LLM, bitacora: Bitaco
                         "Redacta tu resumen usando SOLO hechos_para_resumir de tu herramienta. "
                         "Entrega solo un objeto JSON. El resumen debe ser una justificación breve de 2 a 4 frases. "
                         "No reproduzcas razonamiento interno ni vuelvas a calcular valores.",
-            expected_output='JSON con {"resumen":"justificación breve en español", '
-                            '"ids_revisados":[], "ranking_ids":[], "recomendacion_id":null}. '
-                            "El control de salida anexará automáticamente la evidencia numérica de la herramienta.",
+            expected_output='JSON con {"resumen":"justificación breve en español"}. '
+                            "El control de salida anexará automáticamente IDs y evidencia numérica.",
             agent=agentes[i], context=[tareas[j] for j in contextos],
             guardrail=control(etapa), guardrail_max_retries=2,
             callback=al_terminar(etapa, [list(ROLES)[j] for j in contextos]),

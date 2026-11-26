@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173d33">
+  <title>Habita MX · Decisiones con evidencia</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <aside class="sidebar" id="sidebar">
+    <button class="icon-button close-menu" id="closeMenu" aria-label="Cerrar menú">×</button>
+    <a class="brand" href="#inicio"><span class="brand-mark">H</span><span><b>Habita <i>MX</i></b><small>DECISIONES CON EVIDENCIA</small></span></a>
+    <nav aria-label="Navegación principal">
+      <a class="active" href="#inicio">⌂ <span>Resumen</span></a>
+      <a href="#mapa">⌖ <span>Mapa de inmuebles</span></a>
+      <a href="#comparador">▤ <span>Comparador</span></a>
+      <a href="#agentes">◇ <span>Cómo funciona</span></a>
+    </nav>
+    <button class="new-profile" id="newProfileButton"><span>＋</span> Nuevo perfil</button>
+    <div class="sidebar-note"><strong>Prototipo académico</strong><p>Datos y escenarios simulados.<br>No constituye una oferta financiera.</p><small>EQUIPO 6 · IA · 2026</small></div>
+  </aside>
+  <div class="scrim" id="scrim"></div>
+
+  <main>
+    <header class="topbar">
+      <button class="icon-button menu-button" id="openMenu" aria-label="Abrir menú">☰</button>
+      <div><span id="currentClient">Bienvenido de vuelta</span><h1>Tu análisis de vivienda</h1></div>
+      <button class="icon-button" id="profileButton" aria-label="Ajustar perfil">⚙</button>
+    </header>
+
+    <div class="page" id="inicio">
+      <section class="hero">
+        <p class="eyebrow"><span></span> ANÁLISIS COMPLETADO</p>
+        <h2><span id="viableCount">2</span> alternativas se ajustan a tu perfil</h2>
+        <p>Comparamos tus límites financieros con indicadores de zona. Primero cumplimos tus requisitos; después ordenamos por afinidad.</p>
+        <div class="scenario-tabs" role="tablist" aria-label="Escenario financiero">
+          <button class="active" data-scenario="base">Base</button>
+          <button data-scenario="stress">Estrés</button>
+          <button data-scenario="short">15 años</button>
+        </div>
+        <div class="scenario-summary" id="scenarioSummary" aria-live="polite"></div>
+        <div class="stats">
+          <article><div class="stat-icon">▣</div><div><span>Capacidad mensual</span><strong id="limit">$14,000</strong><small>Límite obligatorio</small></div></article>
+          <article><div class="stat-icon">⌂</div><div><span>Presupuesto máximo</span><strong id="budget">$2,000,000</strong><small>Precio de vivienda</small></div></article>
+          <article><div class="stat-icon">♢</div><div><span>Alternativas viables</span><strong><span id="viableStat">2</span> de <span id="totalStat">6</span></strong><small>Tras aplicar restricciones</small></div></article>
+        </div>
+      </section>
+
+      <section id="mapa">
+        <p class="eyebrow">EXPLORA POR UBICACIÓN</p>
+        <div class="section-heading"><h2>Inmuebles en Ciudad de México</h2><div class="filter-tabs"><button class="active" data-filter="viable">Viables (<span id="viableFilter">2</span>)</button><button data-filter="all">Todos (<span id="allFilter">6</span>)</button></div></div>
+        <div class="property-layout">
+          <div class="map-card">
+            <div class="map" id="realMap" role="application" aria-label="Mapa interactivo de inmuebles en Ciudad de México"><div class="map-loading">Cargando mapa interactivo…</div></div>
+            <div class="property-summary" id="propertySummary"></div>
+          </div>
+        </div>
+      </section>
+
+      <section id="comparador">
+        <p class="eyebrow">RANKING PERSONALIZADO</p><h2>Mejores coincidencias</h2>
+        <div class="ranking" id="ranking"></div>
+        <button class="discarded" id="discardedButton"><span>×</span><b id="discardedCount">4 alternativas descartadas</b><em>Ver motivos</em></button>
+        <div class="discarded-list" id="discardedList" hidden></div>
+        <article class="detail" id="detail"></article>
+      </section>
+
+      <section class="agents" id="agentes">
+        <p class="eyebrow gold">ARQUITECTURA MULTIAGENTE</p>
+        <h2>Cuatro especialistas.<br>Una decisión explicable.</h2>
+        <p>Cada agente revisa una parte del problema. Los cálculos son deterministas y las restricciones nunca se compensan con una buena puntuación.</p>
+        <div class="agent-grid">
+          <article><small>01</small><b>Perfil</b><span>Define límites</span><i>⌂</i></article>
+          <article><small>02</small><b>Zona</b><span>Evalúa contexto</span><i>⌖</i></article>
+          <article><small>03</small><b>Finanzas</b><span>Simula pagos</span><i>▣</i></article>
+          <article><small>04</small><b>Coordinador</b><span>Integra evidencia</span><i>♧</i></article>
+        </div>
+        <div class="agent-analysis" id="agentAnalysis"></div>
+        <footer><span>Motor: Llama 3.2 local</span><span>Flujo secuencial</span><span>Datos simulados</span><span>Sin contratación ni compra</span></footer>
+      </section>
+    </div>
+  </main>
+  <dialog class="profile-dialog" id="profileDialog" aria-labelledby="profileTitle">
+    <form id="profileForm">
+      <div class="setup-brand"><span class="brand-mark">H</span><span><b>Habita <i>MX</i></b><small>DECISIONES CON EVIDENCIA</small></span></div>
+      <div class="dialog-head"><div><p class="eyebrow">PERSONALIZA EL ANÁLISIS</p><h2 id="profileTitle">Ajustar perfil</h2><p>Modifica tus límites y recalcularemos las 20 viviendas iniciales con el motor de HABIMAS.</p></div><button type="button" class="icon-button" id="closeProfile" aria-label="Cerrar">×</button></div>
+      <div class="saved-client"><label>Perfiles guardados<select id="savedProfileSelect"><option value="">Selecciona un cliente</option></select></label><button type="button" class="secondary" id="loadProfileButton">Cargar perfil</button></div>
+      <div class="client-grid"><label>ID de cliente<input name="client_id" type="text" minlength="2" maxlength="40" pattern="[A-Za-z0-9_-]+" placeholder="Ej. CLI-001" required></label><label>Nombre del cliente<input name="client_name" type="text" minlength="2" maxlength="100" placeholder="Nombre completo" required></label></div>
+      <div class="form-grid">
+        <label>Ingreso mensual <span>MXN</span><input name="ingreso_mensual" type="number" min="1" step="1" required></label><label>Gastos mensuales <span>MXN</span><input name="gastos_mensuales" type="number" min="0" step="500" required></label>
+        <label>Deudas mensuales <span>MXN</span><input name="deudas_mensuales" type="number" min="0" step="500" required></label><label>Reserva mensual <span>MXN</span><input name="reserva_mensual" type="number" min="0" step="500" required></label>
+        <label>Pago máximo <span>MXN</span><input name="pago_maximo_usuario" type="number" min="0" step="500" required></label><label>Presupuesto máximo <span>MXN</span><input name="presupuesto_maximo" type="number" min="1" step="1" required></label>
+        <label>Enganche disponible <span>MXN</span><input name="enganche_disponible" type="number" min="0" step="10000" required></label><label>Ahorro para gastos iniciales <span>MXN</span><input name="ahorro_gastos_iniciales" type="number" min="0" step="5000" required></label>
+        <label>Habitaciones mínimas<input name="habitaciones_minimas" type="number" min="1" max="20" required></label><label>Traslado máximo <span>minutos</span><input name="traslado_maximo_min" type="number" min="1" step="1" required></label>
+        <label>Destino habitual<input name="destino_nombre" type="text" minlength="2" maxlength="160" placeholder="Ej. Oficina Reforma" required></label><label>Modo de traslado<select name="modo_traslado" required><option value="transporte_publico">Transporte público</option><option value="automovil">Automóvil</option><option value="bicicleta">Bicicleta</option><option value="caminando">Caminando</option></select></label>
+        <label>Latitud del destino<input name="destino_latitud" type="number" min="19" max="20" step="0.000001" required></label><label>Longitud del destino<input name="destino_longitud" type="number" min="-100" max="-98" step="0.000001" required></label>
+        <label>Hora de salida<input name="hora_salida" type="time" required></label>
+        <label>Seguridad mínima <span>0–100</span><input name="seguridad_minima" type="number" min="0" max="100" required></label><label>Menor exposición a riesgos <span>0–100</span><input name="riesgos_minimo" type="number" min="0" max="100" required></label>
+        <label>Plazo <span>años</span><input name="plazo_anios" type="number" min="1" max="40" required></label><label>Tasa anual <span>%</span><input name="tasa_anual_pct" type="number" min="0" max="100" step="0.1" required></label>
+      </div>
+      <p class="form-error" id="formError" role="alert"></p><div class="dialog-actions"><button type="button" class="secondary" id="resetProfile">Restablecer</button><button type="submit" class="primary" id="analyzeButton">Recalcular análisis</button></div>
+    </form>
+  </dialog>
+  <dialog class="analysis-dialog" id="analysisDialog" aria-labelledby="analysisTitle">
+    <div class="analysis-visual"><div class="pulse-core">H</div><i></i><i></i><i></i></div>
+    <p class="eyebrow">PROCESANDO EVIDENCIA</p><h2 id="analysisTitle">Analizando tu perfil</h2>
+    <p class="analysis-copy" id="analysisCopy">Los especialistas revisan tus límites antes de ordenar alternativas.</p>
+    <div class="progress-track"><span id="analysisProgress"></span></div>
+    <div class="analysis-steps">
+      <article data-stage="perfil"><span class="step-state">1</span><div><b>Agente de perfil</b><small>Valida límites y capacidad mensual</small></div><em>En espera</em></article>
+      <article data-stage="zonas"><span class="step-state">2</span><div><b>Agente de zona</b><small>Evalúa contexto y cobertura</small></div><em>En espera</em></article>
+      <article data-stage="finanzas"><span class="step-state">3</span><div><b>Agente financiero</b><small>Simula pagos y escenarios</small></div><em>En espera</em></article>
+      <article data-stage="coordinacion"><span class="step-state">4</span><div><b>Coordinador</b><small>Integra evidencia y genera el ranking</small></div><em>En espera</em></article>
+    </div>
+    <div class="mode-note"><span>◇</span><div><b>Modo de ejecución</b><small>CrewAI · cuatro agentes · Ollama local</small></div></div>
+    <button class="primary results-button" id="viewResults" hidden>Ver resultados</button>
+  </dialog>
+  <div class="toast" id="toast" role="status"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+  <script src="/app.js" defer></script>
+</body>
+</html>
